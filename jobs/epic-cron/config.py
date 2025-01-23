@@ -66,12 +66,12 @@ class _Config():  # pylint: disable=too-few-public-methods
     DEBUG = False
 
     # POSTGRESQL
-    DB_USER = os.getenv('DATABASE_USERNAME', '')
-    DB_PASSWORD = os.getenv('DATABASE_PASSWORD', '')
-    DB_NAME = os.getenv('DATABASE_NAME', '')
-    DB_HOST = os.getenv('DATABASE_HOST', '')
-    DB_PORT = os.getenv('DATABASE_PORT', '5432')
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{int(DB_PORT)}/{DB_NAME}'
+    TRACK_DB_USER = os.getenv('TRACK_DATABASE_USERNAME', '')
+    TRACK_DB_PASSWORD = os.getenv('TRACK_DATABASE_PASSWORD', '')
+    TRACK_DB_NAME = os.getenv('TRACK_DATABASE_NAME', '')
+    TRACK_DB_HOST = os.getenv('TRACK_DATABASE_HOST', '')
+    TRACK_DB_PORT = os.getenv('TRACK_DATABASE_PORT', '5432')
+    TRACK_DATABASE_URI = f'postgresql://{TRACK_DB_USER}:{TRACK_DB_PASSWORD}@{TRACK_DB_HOST}:{int(TRACK_DB_PORT)}/{TRACK_DB_NAME}'
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -85,6 +85,15 @@ class _Config():  # pylint: disable=too-few-public-methods
         f"postgresql://{COMPLIANCE_DB_USER}:{COMPLIANCE_DB_PASSWORD}@{COMPLIANCE_DB_HOST}:{int(COMPLIANCE_DB_PORT)}/{COMPLIANCE_DB_NAME}"
     )
 
+    # SUBMIT DB Configuration
+    SUBMIT_DB_USER = os.getenv("SUBMIT_DATABASE_USERNAME", "")
+    SUBMIT_DB_PASSWORD = os.getenv("SUBMIT_DATABASE_PASSWORD", "")
+    SUBMIT_DB_NAME = os.getenv("SUBMIT_DATABASE_NAME", "")
+    SUBMIT_DB_HOST = os.getenv("SUBMIT_DATABASE_HOST", "")
+    SUBMIT_DB_PORT = os.getenv("SUBMIT_DATABASE_PORT", "5432")
+    SUBMIT_DATABASE_URI = (
+        f"postgresql://{SUBMIT_DB_USER}:{SUBMIT_DB_PASSWORD}@{SUBMIT_DB_HOST}:{int(SUBMIT_DB_PORT)}/{SUBMIT_DB_NAME}"
+    )
 
     # JWT_OIDC Settings
     JWT_OIDC_WELL_KNOWN_CONFIG = os.getenv('JWT_OIDC_WELL_KNOWN_CONFIG')
@@ -111,7 +120,7 @@ class DevConfig(_Config):  # pylint: disable=too-few-public-methods
 
     TESTING = False
     DEBUG = True
-    print(f'SQLAlchemy URL (DevConfig): {_Config.SQLALCHEMY_DATABASE_URI}')
+    print(f'SQLAlchemy URL (DevConfig): {_Config.TRACK_DATABASE_URI}')
 
 
 class TestConfig(_Config):  # pylint: disable=too-few-public-methods

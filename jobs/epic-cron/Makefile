@@ -37,7 +37,7 @@ clean-test: ## clean test files
 	rm -fr htmlcov/
 
 install: clean ## Install python virtrual environment
-	test -f venv/bin/activate || python3 -m venv  $(CURRENT_ABS_DIR)/venv
+	test -f venv/bin/activate || python3.9 -m venv  $(CURRENT_ABS_DIR)/venv
 	. venv/bin/activate ;\
 	pip install --upgrade pip ;\
 	pip install -Ur requirements/prod.txt ;\

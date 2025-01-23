@@ -3,19 +3,25 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask import current_app
 
-# DB initialize
-db = SQLAlchemy()  # This is the generic model structure
+# DB initialization for SQLAlchemy
+db = SQLAlchemy()
 
+def create_session(engine_uri):
+    """Create a sessionmaker for the given database engine URI."""
+    engine = create_engine(engine_uri)
+    return sessionmaker(bind=engine)
 
 def init_db(app):
-    """Initialize the database engines using the URLs from the app config."""
-    # Source Database engine
-    epic_track_engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-    track_session = sessionmaker(bind=epic_track_engine)
+    """Initialize the session for the Epic Track database."""
+    print("Initializing Epic Track database...")
+    return create_session(app.config['TRACK_DATABASE_URI'])
 
-    # Target Database engine
-    compliance_engine = create_engine(app.config['COMPLIANCE_DATABASE_URI'])
-    compliance_session = sessionmaker(bind=compliance_engine)
+def init_compliance_db(app):
+    """Initialize the session for the Compliance database."""
+    print("Initializing Compliance database...")
+    return create_session(app.config['COMPLIANCE_DATABASE_URI'])
 
-    return track_session, compliance_session
-
+def init_submit_db(app):
+    """Initialize the session for the Submit database."""
+    print("Initializing Submit database...")
+    return create_session(app.config['SUBMIT_DATABASE_URI'])

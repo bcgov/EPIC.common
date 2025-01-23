@@ -1,26 +1,10 @@
-# Copyright © 2019 Province of British Columbia
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""Generate account statements.
-
-This module will create statement records for each account.
-"""
 import os
 import sys
-
+import argparse
 from flask import Flask
 from utils.logger import setup_logging
 import config
+from tasks.project_extractor import ProjectExtractor, TargetSystem  # Import the enum
 
 setup_logging(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'logging.conf'))  # important to do this first
 
@@ -35,46 +19,48 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
     # Load configuration based on the run mode
     app.config.from_object(config.CONFIGURATION.get(run_mode, 'production'))
 
-    # Initialize the Epic Track and Compliance DB engines using init_db
-    track_session, compliance_session = init_db(app)
-
-    # Configure other components (e.g., Sentry, logging, etc.)
-    # ...
-
     register_shellcontext(app)
 
-    # Return the app along with the database sessions
-    return app, track_session, compliance_session
+    return app
 
 
 def register_shellcontext(app):
     """Register shell context objects."""
     def shell_context():
         """Shell context objects."""
-        return {
-            'app': app
-        }
+        return {'app': app}
 
     app.shell_context_processor(shell_context)
 
 
-def run(job_name):
+def run(job_name, target_system):
     """Main function to run the job."""
-    from tasks.project_extractor import ProjectExtractor
-
-    # Create the Flask app and initialize database sessions
-    application, track_session, compliance_session = create_app()
+    # Create the Flask app
+    application = create_app()
 
     # Push the app context to ensure the Flask app is available during task execution
     with application.app_context():
         if job_name == 'EXTRACT_PROJECT':
-            ProjectExtractor.do_sync()  # Pass sessions
-            application.logger.info(f'<<<< Completed Project Sync >>>>')
+            print(f'Running Project Extractor for {target_system.value}...')
+            ProjectExtractor.do_sync(target_system=target_system)
+            application.logger.info(f'<<<< Completed Project Sync for {target_system.value} >>>')
         else:
             application.logger.debug('No valid job_name passed. Exiting without running any tasks.')
 
-    return
-
 
 if __name__ == "__main__":
-    run('EXTRACT_PROJECT')
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Run Project Extractor jobs.")
+    parser.add_argument(
+        'target_system',
+        type=str,
+        choices=[system.value for system in TargetSystem],
+        help="Target system for the job (e.g., SUBMIT or COMPLIANCE)"
+    )
+    args = parser.parse_args()
+
+    # Map the string argument to the TargetSystem enum
+    target_system = TargetSystem(args.target_system)
+
+    # Run the job
+    run('EXTRACT_PROJECT', target_system)
