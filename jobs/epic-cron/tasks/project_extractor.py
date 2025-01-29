@@ -25,11 +25,15 @@ class ProjectExtractor:
 
         # Initialize source and target database sessions
         print("Initializing database sessions...")
-        # track_session = init_db(current_app)
+        track_session = init_db(current_app)
         target_session, target_model = cls._get_target_config(target_system)
 
+        required_fields = ["id", "name", "epic_guid", "proponent_name", "proponent_id", "ea_certificate"]
+
         # Step 1: Fetch data from track.projects
-        track_data = TrackService.fetch_projects()
+        track_data = cls._fetch_track_data(track_session, required_fields)
+
+        return
 
         # Step 2: Clear the target database of existing records
         cls._clear_target_db(target_session, target_model, target_system)
