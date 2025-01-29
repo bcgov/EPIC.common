@@ -3,7 +3,6 @@ from enum import Enum
 
 from compliance_api.models.project import Project as ComplianceProjectModel
 from flask import current_app
-from sqlalchemy import MetaData, Table, select
 from submit_api.models.project import Project as SubmitProjectModel
 
 from epic_cron.models.db import init_db, init_submit_db, init_compliance_db  # Function that initializes DB engines
@@ -25,15 +24,10 @@ class ProjectExtractor:
 
         # Initialize source and target database sessions
         print("Initializing database sessions...")
-        track_session = init_db(current_app)
+
         target_session, target_model = cls._get_target_config(target_system)
-
-        required_fields = ["id", "name", "epic_guid", "proponent_name", "proponent_id", "ea_certificate"]
-
         # Step 1: Fetch data from track.projects
-        track_data = cls._fetch_track_data(track_session, required_fields)
-
-        return
+        track_data = TrackService.fetch_track_data( )
 
         # Step 2: Clear the target database of existing records
         cls._clear_target_db(target_session, target_model, target_system)
@@ -51,39 +45,10 @@ class ProjectExtractor:
         return init_compliance_db(current_app), ComplianceProjectModel
 
     @staticmethod
-    def _fetch_track_data(track_session, required_fields):
-        """Fetch and log data from the track.projects table, joining with proponents."""
-        print("Fetching data from track database...")
-        with track_session() as session:
-
-            track_metadata = MetaData()
-            track_projects_table = Table('projects', track_metadata, autoload_with=session.bind)
-            track_proponents_table = Table('proponents', track_metadata, autoload_with=session.bind)
-
-            print(f"Selecting required fields: {required_fields} and joining with proponents...")
-            # Join projects with proponents to get proponent name
-            query = (
-                select(
-                    *[track_projects_table.c[field] for field in required_fields if field != "proponent_name"],
-                    track_proponents_table.c.name.label("proponent_name")
-                )
-                .join(track_proponents_table, track_projects_table.c.proponent_id == track_proponents_table.c.id)
-            )
-            track_data = session.execute(query).fetchall()
-            print(f"Number of rows fetched from track.projects: {len(track_data)}")
-
-            debug_logs_enabled = current_app.config.get("ENABLE_DETAILED_LOGS", False)
-            if debug_logs_enabled:
-                for row in track_data:
-                    print(f"Fetched row: {dict(row._mapping)}")
-
-        return track_data
-
-    @staticmethod
     def _clear_target_db(target_session, target_model, target_system):
 
         """
-           Clear existing records in the target database.
+           Clear existing records in the target database for projects table.
 
            This method uses record-by-record deletion to handle dependency issues caused by foreign key constraints.
            Instead of bulk deletion, which might fail entirely, this approach ensures each record is processed
@@ -149,7 +114,8 @@ class ProjectExtractor:
         with target_session() as session:
             successful_inserts = 0
             failed_inserts = 0
-            for index, project_dict in enumerate(track_data):
+            for index, row in enumerate(track_data):
+                project_dict = dict(row._mapping)
                 debug_logs_enabled = current_app.config.get("ENABLE_DETAILED_LOGS", False)
                 if debug_logs_enabled:
                     print(f"Inserting project {index + 1}/{len(track_data)}: {project_dict}")

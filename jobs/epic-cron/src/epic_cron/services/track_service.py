@@ -1,13 +1,49 @@
 import requests
 from flask import current_app
+from sqlalchemy import MetaData, Table, select
+
+from epic_cron.models.db import init_db
 
 
 class TrackService:
     """Service to interact with the Track API."""
 
     @staticmethod
+    def fetch_track_data():
+        """Fetch and log data from the track.projects table, joining with proponents."""
+        print("Fetching data from track database...")
+        required_fields = ["id", "name", "epic_guid", "proponent_name", "proponent_id", "ea_certificate"]
+
+        track_session = init_db(current_app)
+        with track_session() as session:
+
+            track_metadata = MetaData()
+            track_projects_table = Table('projects', track_metadata, autoload_with=session.bind)
+            track_proponents_table = Table('proponents', track_metadata, autoload_with=session.bind)
+
+            print(f"Selecting required fields: {required_fields} and joining with proponents...")
+            # Join projects with proponents to get proponent name
+            query = (
+                select(
+                    *[track_projects_table.c[field] for field in required_fields if field != "proponent_name"],
+                    track_proponents_table.c.name.label("proponent_name")
+                )
+                .join(track_proponents_table, track_projects_table.c.proponent_id == track_proponents_table.c.id)
+            )
+            track_data = session.execute(query).fetchall()
+            print(f"Number of rows fetched from track.projects: {len(track_data)}")
+
+            debug_logs_enabled = current_app.config.get("ENABLE_DETAILED_LOGS", False)
+            if debug_logs_enabled:
+                for row in track_data:
+                    print(f"Fetched row: {dict(row._mapping)}")
+
+        return track_data
+
+    @staticmethod
     def fetch_projects():
         """
+        Not in use.
         Fetch project data from the Track API and map the required fields.
 
         Args:
