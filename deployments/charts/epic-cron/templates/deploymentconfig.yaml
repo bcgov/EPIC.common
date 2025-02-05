@@ -1,0 +1,155 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app: {{ .Values.name }}
+    app-group: epic-app
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+      failurePolicy: Abort
+  triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - {{ .Values.name }}
+        from:
+          kind: ImageStreamTag
+          namespace: {{ .Values.imageNamespace }}
+          name: {{ .Values.name }}:{{ .Values.imageTag }}
+    - type: ConfigChange
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    app: {{ .Values.name }}
+    deploymentconfig: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+        app-group: epic-app
+        environment: {{ .Values.env }}
+        deploymentconfig: {{ .Values.name }}
+    spec:
+      volumes:
+      - name: cron-config
+        configMap:
+          name: {{ .Values.name }}-config
+          defaultMode: 420
+      containers:
+      - name: {{ .Values.name }}
+        image: image-registry.openshift-image-registry.svc:5000/{{ .Values.imageNamespace }}/{{ .Values.name }}:{{ .Values.imageTag }}
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+        - name: cron-config
+          readOnly: true
+          mountPath: /epic-cron/cron/
+        env:
+          # Keycloak Environment Variables
+          - name: TRACK_API_BASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: epic-cron
+                key: track-url
+          - name: KEYCLOAK_BASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: epic-cron
+                key: base-url
+          - name: KEYCLOAK_REALM_NAME
+            valueFrom:
+              secretKeyRef:
+                name: epic-cron
+                key: realm-name
+          - name: KEYCLOAK_SERVICE_ACCOUNT_ID
+            valueFrom:
+              secretKeyRef:
+                name: epic-cron
+                key: admin-username
+          - name: KEYCLOAK_SERVICE_ACCOUNT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: epic-cron
+                key: admin-secret
+          - name: TRACK_DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: track-patroni
+                key: app-db-username
+          - name: TRACK_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: track-patroni
+                key: app-db-password
+          - name: TRACK_DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                name: track-patroni
+                key: app-db-username
+          - name: TRACK_DATABASE_HOST
+            value: "{{ .Values.TRACK.database.host }}"
+          - name: TRACK_DATABASE_PORT
+            value: "{{ .Values.TRACK.database.port }}"
+          - name: SUBMIT_DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: submit-patroni
+                key: app-db-name
+          - name: SUBMIT_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: submit-patroni
+                key: app-db-password
+          - name: SUBMIT_DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                name: submit-patroni
+                key: app-db-name
+          - name: SUBMIT_DATABASE_HOST
+            value: "{{ .Values.SUBMIT.database.host }}"
+          - name: SUBMIT_DATABASE_PORT
+            value: "{{ .Values.SUBMIT.database.port }}"
+          - name: COMPLIANCE_DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: compliance-patroni
+                key: app-db-username
+          - name: COMPLIANCE_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: compliance-patroni
+                key: app-db-password
+          - name: COMPLIANCE_DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                name: compliance-patroni
+                key: app-db-name
+          - name: COMPLIANCE_DATABASE_HOST
+            value: "{{ .Values.COMPLIANCE.database.host }}"
+          - name: COMPLIANCE_DATABASE_PORT
+            value: "{{ .Values.COMPLIANCE.database.port }}"
+
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+        terminationMessagePath: "/dev/termination-log"
+        terminationMessagePolicy: File
+        imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler

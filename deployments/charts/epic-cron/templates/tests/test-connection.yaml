@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.name }}-test-connection
+spec:
+  containers:
+  - name: curl
+    image: curlimages/curl
+    args:
+    - curl
+    - http://{{ .Values.name }}:8080
+  restartPolicy: Never

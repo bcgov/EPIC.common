@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}-config
+  labels:
+    app: {{ .Values.name }}
+    app-group: submit-app
+data:
+  crontab: |
+    {{ .Values.cronTab }}

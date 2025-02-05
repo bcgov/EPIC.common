@@ -1,0 +1,25 @@
+name: epic-cron
+imageNamespace: c8b80a-tools
+env: dev
+database:
+  host: submit-patroni
+  port: "5432"
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limits:
+    cpu: 250m
+    memory: 200Mi
+replicaCount: 1
+imageTag: latest
+
+cronTab: "*/5 * * * * default cd /epic-cron && ./run_project_cron_submit.sh"
+
+
+chesSecrets:
+  create: true
+  tokenEndPoint: "https://test.loginproxy.gov.bc.ca/auth/realms/comsvcauth/protocol/openid-connect/token"
+  apiEndPoint: ""
+  clientId: ""
+  clientSecret: ""

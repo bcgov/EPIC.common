@@ -1,0 +1,41 @@
+name: epic-cron
+imageNamespace: c8b80a-tools
+env: dev
+database:
+  host: submit-patroni
+  port: "5432"
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limits:
+    cpu: 250m
+    memory: 200Mi
+replicaCount: 1
+imageTag: dev
+
+cronTab: "*/1 * * * * default cd /epic-cron && ./run_project_cron_submit.sh"
+
+
+SUBMIT:
+  database:
+    host: submit-patroni
+    port: "5432"
+
+COMPLIANCE:
+  database:
+    host: compliance-patroni
+    port: "5432"
+
+TRACK:
+  database:
+    host: patroni-epictrack-db.c72cba-dev.svc
+    port: "5432"
+
+secrets:
+
+  trackApiBaseUrl: "https://epictrack-api-c72cba-dev.apps.gold.devops.gov.bc.ca"
+  keycloakBaseUrl: "https://dev.loginproxy.gov.bc.ca"
+  keycloakRealmName: "eao-epic"
+  keycloakServiceAccountId: ""
+  keycloakServiceAccountSecret: ""
