@@ -1,6 +1,6 @@
 name: epic-cron
 imageNamespace: c8b80a-tools
-env: test
+env: prod
 database:
   host: submit-patroni
   port: "5432"

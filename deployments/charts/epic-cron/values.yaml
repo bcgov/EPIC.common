@@ -14,8 +14,9 @@ resources:
 replicaCount: 1
 imageTag: dev
 
-cronTab: "*/1 * * * * default cd /epic-cron && ./run_project_cron_submit.sh"
-
+cronTab: |
+  0 1 * * * default cd /epic-cron && ./run_project_cron_submit.sh
+  0 3 * * * default cd /epic-cron && ./run_project_cron_compliance.sh
 
 SUBMIT:
   database:
@@ -29,13 +30,11 @@ COMPLIANCE:
 
 TRACK:
   database:
-    host: patroni-epictrack-db.c72cba-dev.svc
+    host:
     port: "5432"
 
-secrets:
 
-  trackApiBaseUrl: "https://epictrack-api-c72cba-dev.apps.gold.devops.gov.bc.ca"
-  keycloakBaseUrl: "https://dev.loginproxy.gov.bc.ca"
-  keycloakRealmName: "eao-epic"
-  keycloakServiceAccountId: ""
-  keycloakServiceAccountSecret: ""
+secrets:
+  trackDbUsername: ""
+  trackDbPassword: ""
+  trackDbName: ""

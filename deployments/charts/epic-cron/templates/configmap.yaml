@@ -6,5 +6,5 @@ metadata:
     app: {{ .Values.name }}
     app-group: submit-app
 data:
-  crontab: |
-    {{ .Values.cronTab }}
+  crontab: |-
+{{ .Values.cronTab | indent 4 }}

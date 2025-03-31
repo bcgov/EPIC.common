@@ -33,32 +33,6 @@ spec:
               readOnly: true
               mountPath: /epic-cron/cron/
           env:
-            - name: TRACK_API_BASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: epic-cron
-                  key: track-url
-            - name: KEYCLOAK_BASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: epic-cron
-                  key: base-url
-            - name: KEYCLOAK_REALM_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: epic-cron
-                  key: realm-name
-            - name: KEYCLOAK_SERVICE_ACCOUNT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: epic-cron
-                  key: admin-username
-            - name: KEYCLOAK_SERVICE_ACCOUNT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: epic-cron
-                  key: admin-secret
-
             - name: TRACK_DATABASE_USERNAME
               valueFrom:
                 secretKeyRef:
