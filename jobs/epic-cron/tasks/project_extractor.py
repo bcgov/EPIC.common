@@ -123,6 +123,7 @@ class ProjectExtractor:
                 try:
                     if target_system == TargetSystem.SUBMIT:
                         project_instance = target_model(
+                            id=project_dict["id"],
                             name=project_dict['name'],
                             epic_guid=project_dict.get("epic_guid"),
                             proponent_id=project_dict.get("proponent_id"),
