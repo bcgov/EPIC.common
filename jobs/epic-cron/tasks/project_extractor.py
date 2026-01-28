@@ -9,6 +9,7 @@ from condition_api.models.project import Project as ConditionProjectModel
 from epic_cron.models.db import init_db, init_submit_db, init_compliance_db, \
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
+from tasks.proponent_status_updater import ProponentStatusUpdater
 
 
 class TargetSystem(Enum):
@@ -37,6 +38,10 @@ class ProjectExtractor:
 
         # Step 3: Insert new records into the target database
         cls._insert_into_target_db(track_data, target_session, target_model, target_system)
+
+        # Step 4: Proponent Status Update (Only for SUBMIT)
+        if target_system == TargetSystem.SUBMIT:
+            ProponentStatusUpdater.update(target_session, target_model)
 
         print(f"Project Extractor for {target_system.value} completed at {datetime.now()}")
 
@@ -132,7 +137,6 @@ class ProjectExtractor:
                             name=project_dict['name'],
                             epic_guid=project_dict.get("epic_guid"),
                             proponent_id=project_dict.get("proponent_id"),
-                            proponent_name=project_dict.get("proponent_name"),
                             ea_certificate=project_dict.get("ea_certificate")
                         )
                     elif target_system == TargetSystem.CONDITIONS:

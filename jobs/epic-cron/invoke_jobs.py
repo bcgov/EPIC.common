@@ -5,6 +5,7 @@ from flask import Flask
 from utils.logger import setup_logging
 import config
 from tasks.project_extractor import ProjectExtractor, TargetSystem  # Import the enum
+from tasks.proponent_extractor import ProponentExtractor
 from tasks.virus_scanner import VirusScanner
 
 setup_logging(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'logging.conf'))  # important to do this first
@@ -40,6 +41,12 @@ def run(job_name, target_system=None, file_path=None):
 
     with application.app_context():
         if job_name == 'EXTRACT_PROJECT':
+            # For SUBMIT, we must sync proponents first as they are dependencies
+            if target_system == TargetSystem.SUBMIT:
+                print(f'Running Proponent Extractor for {target_system.value}...')
+                ProponentExtractor.do_sync()
+                application.logger.info(f'<<<< Completed Proponent Sync for {target_system.value} >>>')
+
             print(f'Running Project Extractor for {target_system.value}...')
             ProjectExtractor.do_sync(target_system=target_system)
             application.logger.info(f'<<<< Completed Project Sync for {target_system.value} >>>')
