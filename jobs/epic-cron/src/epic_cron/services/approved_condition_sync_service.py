@@ -78,8 +78,8 @@ class ApprovedConditionService:
         config = current_app.config
         base_url = config.get("KEYCLOAK_BASE_URL")
         realm = config.get("KEYCLOAK_REALM_NAME")
-        admin_client_id = config.get("KEYCLOAK_SERVICE_ACCOUNT_ID")
-        admin_secret = config.get("KEYCLOAK_SERVICE_ACCOUNT_SECRET")
+        admin_client_id = config.get("SERVICE_ACCOUNT_ID")
+        admin_secret = config.get("SERVICE_ACCOUNT_SECRET")
         timeout = config.get("CONNECT_TIMEOUT", 60)
 
         # Construct token URL and headers

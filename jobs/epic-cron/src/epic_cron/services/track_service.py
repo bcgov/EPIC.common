@@ -9,6 +9,28 @@ class TrackService:
     """Service to interact with the Track API."""
 
     @staticmethod
+    def fetch_proponents():
+        """Fetch and log unique proponents from the track.proponents table."""
+        print("Fetching proponents from track database...")
+
+        track_session = init_db(current_app)
+        with track_session() as session:
+            track_metadata = MetaData()
+            track_proponents_table = Table('proponents', track_metadata, autoload_with=session.bind)
+
+            print("Selecting all proponents...")
+            query = select(track_proponents_table.c.id, track_proponents_table.c.name)
+            proponents_data = session.execute(query).fetchall()
+            print(f"Number of rows fetched from track.proponents: {len(proponents_data)}")
+            
+            debug_logs_enabled = current_app.config.get("ENABLE_DETAILED_LOGS", False)
+            if debug_logs_enabled:
+                 for row in proponents_data:
+                    print(f"Fetched proponent: {dict(row._mapping)}")
+
+        return proponents_data
+
+    @staticmethod
     def fetch_track_data():
         """Fetch and log data from the track.projects table, joining with proponents."""
         current_app.logger.info("Fetching data from track database...")
@@ -113,8 +135,8 @@ class TrackService:
         config = current_app.config
         base_url = config.get("KEYCLOAK_BASE_URL")
         realm = config.get("KEYCLOAK_REALM_NAME")
-        admin_client_id = config.get("KEYCLOAK_SERVICE_ACCOUNT_ID")
-        admin_secret = config.get("KEYCLOAK_SERVICE_ACCOUNT_SECRET")
+        admin_client_id = config.get("SERVICE_ACCOUNT_ID")
+        admin_secret = config.get("SERVICE_ACCOUNT_SECRET")
         timeout = config.get("CONNECT_TIMEOUT", 60)
 
         # Construct token URL and headers

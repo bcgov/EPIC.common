@@ -139,16 +139,18 @@ spec:
               value: "https://dev.loginproxy.gov.bc.ca/auth"
             - name: KEYCLOAK_REALM_NAME
               value: "eao-epic"
-            - name: KEYCLOAK_SERVICE_ACCOUNT_ID
+            - name: SERVICE_ACCOUNT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.name }}
-                  key: KEYCLOAK_SERVICE_ACCOUNT_ID
-            - name: KEYCLOAK_SERVICE_ACCOUNT_SECRET
+                  key: SERVICE_ACCOUNT_ID
+            - name: SERVICE_ACCOUNT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.name }}
-                  key: KEYCLOAK_SERVICE_ACCOUNT_SECRET
+                  key: SERVICE_ACCOUNT_SECRET
+            - name: CONNECT_TIMEOUT
+              value: "60"
 
             - name: CONDITION_API_BASE_URL
               value: "https://epic-dev.apps.silver.devops.gov.bc.ca/api/v1/condition"

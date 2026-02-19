@@ -11,7 +11,7 @@ from submit_api.models.package import Package as PackageModel
 from submit_api.utils.constants import (
     MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE, MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE,
     MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE, MANAGEMENT_PLAN_UPDATE_REQUEST_CREATED_EMAIL_TEMPLATE,
-    NEW_USER_INVITATION_EMAIL_TEMPLATE)
+    NEW_USER_INVITATION_EMAIL_TEMPLATE, SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE)
 
 from epic_cron.models import db
 from epic_cron.services.ches_service import ChesApiService
@@ -51,12 +51,34 @@ class EmailService:  # pylint: disable=too-few-public-methods
             MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE: cls._process_resubmission_request_email,
             # staff email uses the same content, but just a different template..so reusing the same method passing template name
             MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE: partial(cls._process_package_submission_email, template_name=MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE),
-            NEW_USER_INVITATION_EMAIL_TEMPLATE: cls._process_new_user_invitation_email
+            NEW_USER_INVITATION_EMAIL_TEMPLATE: cls._process_new_user_invitation_email,
+            SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE: cls._process_awaiting_manager_approval_email
         }
         template = email_entry.template_name
         if template not in email_processors:
             raise BadRequestError(f"Unsupported email template: {template}")
         return email_processors.get(template)
+
+    @staticmethod
+    def _process_awaiting_manager_approval_email(email_entry: EmailQueue):
+        """Process email notifying MPT Managers that a package awaits Manager's approval."""
+        from epic_cron.services.keycloak_service import KeycloakService
+        package_id = email_entry.entity_id
+        package: PackageModel = db.session.get(PackageModel, package_id)
+        if not package:
+            raise BadRequestError(f"Package with ID {package_id} not found.")
+        manager_emails = KeycloakService.get_eao_manager_emails()
+        if not manager_emails:
+            raise BadRequestError(
+                "No EAO_MANAGER group members with email found (check Keycloak admin config)"
+            )
+        email_details = PackageSubmissionEmailService.prepare_awaiting_manager_approval_email(
+            package, manager_emails
+        )
+        EmailService.send_email(email_details)
+        email_entry.status = EmailStatus.SENT.value
+        email_entry.sent_at = datetime.utcnow()
+        db.session.commit()
 
     @staticmethod
     def _process_package_submission_email(email_entry: EmailQueue, template_name=None ):

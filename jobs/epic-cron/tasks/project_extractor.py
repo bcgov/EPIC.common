@@ -9,6 +9,7 @@ from submit_api.models.project import Project as SubmitProjectModel
 from epic_cron.models.db import init_db, init_submit_db, init_compliance_db, \
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
+from tasks.proponent_status_updater import ProponentStatusUpdater
 
 
 class TargetSystem(Enum):
@@ -36,6 +37,9 @@ class ProjectExtractor:
 
             # Step 2: Upsert records into the target database (update existing or insert new)
             cls._upsert_into_target_db(track_data, target_session, target_model, target_system)
+            # Step 3: Proponent Status Update (Only for SUBMIT)
+            if target_system == TargetSystem.SUBMIT:
+                ProponentStatusUpdater.update(target_session, target_model)
 
             current_app.logger.info(f"Project Extractor for {target_system.value} completed at {datetime.now()}")
         finally:

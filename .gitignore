@@ -164,3 +164,6 @@ cython_debug/
 /.idea/vcs.xml
 /jobs/epic-cron/.idea/modules.xml
 /jobs/epic-cron/.idea/misc.xml
+
+/deployments/charts/epic-cron/values.prod.yaml
+/deployments/charts/epic-cron/values.test.yaml

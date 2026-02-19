@@ -8,8 +8,11 @@ from submit_api.models.package import Package as PackageModel
 from submit_api.models.project import Project as ProjectModel
 from submit_api.models.submission import SubmissionType
 from submit_api.models.user import User as UserModel
+from submit_api.enums.item_status import ItemStatus
+from submit_api.models.submission_review_entry import SubmissionReviewEntryType
 from submit_api.utils.constants import (
-    MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE, MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE)
+    MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE, MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE,
+    SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE)
 
 from epic_cron.models import db
 from epic_cron.utils import constants
@@ -68,6 +71,58 @@ class PackageSubmissionEmailService:  # pylint: disable=too-few-public-methods
             f"Sending email from {email_details.sender} to {', '.join(email_details.recipients)} for package: {email_details.body_args['package_name']}")
 
         return email_details
+
+    @classmethod
+    def prepare_awaiting_manager_approval_email(cls, package: PackageModel, manager_emails: list) -> EmailDetails:
+        """Prepare email notifying MPT Managers that a package has been reviewed and awaits Manager's approval."""
+        sender_email = cls.get_email_sender_for_package_type(package.type.name)
+        if not sender_email:
+            sender_email = current_app.config.get('SENDER_EMAIL', '')
+        if not sender_email:
+            raise BadRequestError(f"Sender email not found for package type: {package.type.name}")
+        account_project = cls._get_account_project_by_id(package.account_project_id)
+        project = cls._get_project_by_id(account_project.project_id)
+        if not project:
+            raise BadRequestError(f"Project not found for account project ID: {account_project.id}")
+        team_member_name = cls._get_reviewer_name_for_awaiting_manager_package(package)
+        subject = f"Submission awaiting Manager approval - {project.name} - {package.name}"
+        email_details = EmailDetails(
+            template_name=SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE,
+            body_args={
+                'package_name': package.name,
+                'project_name': project.name,
+                'team_member_name': team_member_name,
+            },
+            subject=subject,
+            sender=sender_email,
+            recipients=manager_emails,
+        )
+        return email_details
+
+    @staticmethod
+    def _get_reviewer_name_for_awaiting_manager_package(package: PackageModel) -> str:
+        """Get the name of the team member who sent the package to Manager (from review STAFF_RECOMMENDATION)."""
+        from submit_api.models.submission_review_entry import SubmissionReviewEntry
+        awaiting_statuses = (
+            ItemStatus.MP_AWAITING_MANAGER_APPROVAL,
+            ItemStatus.CC_AWAITING_MANAGER_APPROVAL,
+        )
+        for item in package.items:
+            if item.status not in awaiting_statuses:
+                continue
+            review = getattr(item, 'review', None) or next((r for r in item.reviews if r.active), None)
+            if not review:
+                continue
+            entry = SubmissionReviewEntry.get_review_entry_by_id_and_type(
+                review.id, SubmissionReviewEntryType.STAFF_RECOMMENDATION
+            )
+            if not entry or not entry.updated_by:
+                continue
+            user = entry.updated_by_user
+            if user and getattr(user, 'staff_user', None) and user.staff_user:
+                return user.staff_user.full_name or entry.updated_by
+            return entry.updated_by
+        return 'A team member'
 
     @staticmethod
     def get_email_sender_for_package_type(package_type: str) -> str:
