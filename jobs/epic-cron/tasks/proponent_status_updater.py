@@ -20,12 +20,13 @@ class ProponentStatusUpdater:
                     return
 
                 print(f"Updating {len(ids)} proponents to ELIGIBLE")
-                proponents = session.query(SubmitProponentModel).filter(
+                # Optimization: Perform bulk update directly at DB level
+                session.query(SubmitProponentModel).filter(
                     SubmitProponentModel.id.in_(ids)
-                ).all()
-                
-                for proponent in proponents:
-                    proponent.status = ProponentStatus.ELIGIBLE
+                ).update(
+                    {SubmitProponentModel.status: ProponentStatus.ELIGIBLE},
+                    synchronize_session=False
+                )
                 session.commit()
         except Exception as e:
             print(f"Error updating based on conditions: {e}")

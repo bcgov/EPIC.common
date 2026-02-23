@@ -28,8 +28,20 @@ def read_requirements(filename):
     """
     with open(filename, 'r') as req:
         requirements = req.readlines()
-    install_requires = [r.strip() for r in requirements if r.find('git+') != 0]
+    install_requires = [r.strip() for r in requirements if r.strip() and not r.startswith('#') and not r.startswith('-e git+')]
     return install_requires
+
+
+def read_git_requirements(filename):
+    """
+    Get git requirements from the requirements.txt file.
+    :return: Git requirements
+    :rtype: list
+    """
+    with open(filename, 'r') as req:
+        requirements = req.readlines()
+    git_requires = [r.strip() for r in requirements if r.startswith('-e git+')]
+    return git_requires
 
 
 def read(filepath):
@@ -45,6 +57,7 @@ def read(filepath):
 
 
 REQUIREMENTS = read_requirements('requirements/prod.txt')
+GIT_REQUIREMENTS = read_git_requirements('requirements/repo-libraries.txt')
 
 setup(
     name="epic_cron",
@@ -56,6 +69,8 @@ setup(
     long_description=read('README.md'),
     zip_safe=False,
     install_requires=REQUIREMENTS,
+    dependency_links=GIT_REQUIREMENTS,
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
+)
 )

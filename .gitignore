@@ -164,3 +164,12 @@ cython_debug/
 /.idea/vcs.xml
 /jobs/epic-cron/.idea/modules.xml
 /jobs/epic-cron/.idea/misc.xml
+.idea/EPIC.common.iml
+.idea/misc.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+deployments/.DS_Store
+jobs/.DS_Store
+jobs/epic-cron/.idea/epic-cron.iml
+jobs/epic-cron/.idea/inspectionProfiles/profiles_settings.xml
+jobs/epic-cron/.idea/inspectionProfiles/Project_Default.xml

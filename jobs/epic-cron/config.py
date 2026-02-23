@@ -105,6 +105,16 @@ class _Config():  # pylint: disable=too-few-public-methods
         f"postgresql://{CONDITION_DB_USER}:{CONDITION_DB_PASSWORD}@{CONDITION_DB_HOST}:{int(CONDITION_DB_PORT)}/{CONDITION_DB_NAME}"
     )
 
+    # CENTRE DB Configuration
+    CENTRE_DB_USER = os.getenv("CENTRE_DATABASE_USERNAME", "")
+    CENTRE_DB_PASSWORD = os.getenv("CENTRE_DATABASE_PASSWORD", "")
+    CENTRE_DB_NAME = os.getenv("CENTRE_DATABASE_NAME", "")
+    CENTRE_DB_HOST = os.getenv("CENTRE_DATABASE_HOST", "")
+    CENTRE_DB_PORT = os.getenv("CENTRE_DATABASE_PORT", "5432")
+    CENTRE_DATABASE_URI = (
+        f"postgresql://{CENTRE_DB_USER}:{CENTRE_DB_PASSWORD}@{CENTRE_DB_HOST}:{int(CENTRE_DB_PORT)}/{CENTRE_DB_NAME}"
+    )
+
     # Debug logging for detailed logs in Project Extractor
     ENABLE_DETAILED_LOGS = os.getenv("ENABLE_DETAILED_LOGS", "false").lower() == "true"
 
