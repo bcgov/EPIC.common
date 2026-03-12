@@ -12,6 +12,7 @@ python-dotenv
 psycopg2-binary
 marshmallow-sqlalchemy==1.0.0
 marshmallow_enum
+marshmallow==3.18.0
 jsonschema
 requests
 itsdangerous
@@ -19,9 +20,7 @@ werkzeug
 sqlalchemy-utils
 Flask-Caching
 sqlalchemy
-secure
-python-dotenv
-requests
+secure>=1.0.0
 flask_cors
 pyhumps
 importlib-resources

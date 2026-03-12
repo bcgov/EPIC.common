@@ -164,3 +164,18 @@ cython_debug/
 /.idea/vcs.xml
 /jobs/epic-cron/.idea/modules.xml
 /jobs/epic-cron/.idea/misc.xml
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# JetBrains IDEs (.idea/)
+.idea/
+**/.idea/
+
+# Local environment / secret files
+"env center"
+jobs/epic-cron/env center
+
+# Local service source checkouts (not part of this repo)
+jobs/epic-cron/src/
