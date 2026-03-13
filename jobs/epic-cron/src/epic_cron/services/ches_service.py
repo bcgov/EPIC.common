@@ -99,6 +99,13 @@ class ChesApiService:
             response.raise_for_status()
 
             response_json = response.json()
+            current_app.logger.info(
+                'Email sent via CHES | to=%s | subject=%s | from=%s | status=%s',
+                ', '.join(email_details.recipients),
+                email_details.subject,
+                email_details.sender,
+                response.status_code,
+            )
             return response_json, response.status_code
         except requests.exceptions.RequestException as e:
             current_app.logger.error(f'Error occurred while sending email: {str(e)}')
