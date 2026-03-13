@@ -23,8 +23,11 @@ class InvitationEmailService:  # pylint: disable=too-few-public-methods
         # Default action text
         invitation_action_text = "join"
         # Check role and modify invitation action text accordingly
-        if invitation.role and invitation.role.role_name == RoleEnum.SPECIFIC_SUBMISSION_CONTRIBUTOR.value:
-            invitation_action_text = "collaborate on"
+        if invitation.role:
+            if invitation.role.role_name == RoleEnum.ACCOUNT_PRIMARY_ADMIN.value:
+                invitation_action_text = "manage"
+            elif invitation.role.role_name == RoleEnum.SPECIFIC_SUBMISSION_CONTRIBUTOR.value:
+                invitation_action_text = "collaborate on"
 
         bc_service_card_url = current_app.config.get('BC_SERVICE_CARD_URL', 'https://id.gov.bc.ca')
 
@@ -47,7 +50,7 @@ class InvitationEmailService:  # pylint: disable=too-few-public-methods
                 'invitation_url': invitation_url,
                 'project_name': project.name or '',
                 'bc_service_card_url': bc_service_card_url,
-                'certificate_holder_name': project.proponent_name or '',
+                'certificate_holder_name': (project.proponent.name if project.proponent else '') or '',
                 'invitation_action_text': invitation_action_text,
             },
             subject='Invitation to collaborate on EPIC.submit',

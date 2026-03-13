@@ -59,7 +59,7 @@ class PackageSubmissionEmailService:  # pylint: disable=too-few-public-methods
                 'project_name': project.name,
                 'submitter_name': submitter.full_name,
                 'submission_date': convert_utc_to_local_str(package.submitted_on),
-                'certificate_holder_name': project.proponent_name,
+                'certificate_holder_name': project.proponent.name if project.proponent else '',
                 'package_name': package.name,
                 'documents': [submission.submitted_document.name for submission in document_submissions]
             },
