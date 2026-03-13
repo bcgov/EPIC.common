@@ -1,5 +1,5 @@
 from flask import current_app
-from submit_api.data_classes.email_details import EmailDetails
+from epic_cron.data_classes.email_details import EmailDetails
 from submit_api.enums.role import RoleEnum
 from submit_api.exceptions import BadRequestError
 from submit_api.models.account_user import AccountUser as AccountUserModel

@@ -6,6 +6,12 @@ from datetime import datetime
 from flask import Flask
 from utils.logger import setup_logging
 import config
+
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+SRC_DIR = os.path.join(CURRENT_DIR, 'src')
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 from tasks.project_extractor import ProjectExtractor, TargetSystem  # Import the enum
 from tasks.proponent_extractor import ProponentExtractor
 from tasks.proponent_status_updater import ProponentStatusUpdater
@@ -160,4 +166,3 @@ if __name__ == "__main__":
         except ValueError:
             logger.error(f"Invalid job type '{job_type}'. Must be one of: SUBMIT, COMPLIANCE, EMAIL, SYNC_CONDITION, SCAN_VIRUS, EXTRACT_WORK, EXTRACT_PHASE")
             sys.exit(1)
-

@@ -1,12 +1,13 @@
 from typing import Callable, Dict
 
 from flask import current_app
-from submit_api.data_classes.email_details import EmailDetails
+from epic_cron.data_classes.email_details import EmailDetails
 from submit_api.exceptions import BadRequestError
 
 from epic_cron.models.email_job import EmailJob
 from epic_cron.repositories.email_repository import EmailRepository
 from epic_cron.services.ches_service import ChesApiService
+from epic_cron.services.template_renderer import TemplateRenderer
 
 
 class CentreEmailService:
@@ -49,8 +50,14 @@ class CentreEmailService:
     def send_email(email_details: EmailDetails):
         """Send email via CHES."""
         try:
+            payload = TemplateRenderer.compose_email(
+                email_details=email_details,
+                domain='centre',
+                web_url=current_app.config.get("WEB_URL", ""),
+                environment=current_app.config.get("ENVIRONMENT", ""),
+            )
             ches = ChesApiService()
-            return ches.send_email(email_details, template_sub_directory='centre')
+            return ches.send_email(payload)
         except Exception as e:
             current_app.logger.error(f"Failed to send email: {e}", exc_info=True)
             raise BadRequestError(f"Failed to send email")

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invitation to collaborate on EPIC.submit</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #003366;
+      background-color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 220px;
+      height: auto;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: left;
+    }
+    .highlight-box {
+      background-color: #FAF9F8;
+      padding: 16px;
+      border-left: 4px solid #1a5a96;
+      margin: 20px 0;
+    }
+    .cta-link {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .cta-link:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 30px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="{{ logo_url }}" alt="EAO Logo" />
+    </div>
+
+    <div class="content">
+      <p>You have been invited to <strong>{{ invitation_action_text }} {{ project_name }} </strong> on EPIC.submit.</p>
+
+      <p>Click the link below and sign in with your <strong>Business BCeID</strong> or <strong>BC Services Card</strong> to access the project.</p>
+
+      <div class="highlight-box">
+        <a href="{{ invitation_url }}" class="cta-link">Join EPIC.submit</a>
+      </div>
+
+      <p>
+      If you don’t have a Business BCeID associated with this project, please contact the person in charge of the Business BCeID account for <strong>{{ certificate_holder_name }}</strong>.
+      </p>
+
+      <p>
+       For more information on how to use or set up a BC Services Card account, visit <a href="{{ bc_service_card_url }}">{{ bc_service_card_url }}</a>.
+      </p>
+
+      <p>Thank you,</p>
+      <p>
+       <strong>EAO Management Plan Operations Team</strong><br />
+        B.C. Environmental Assessment Office<br />
+        Government of British Columbia
+      </p>
+    </div>
+  </div>
+</body>
+</html>

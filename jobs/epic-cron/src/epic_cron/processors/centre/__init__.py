@@ -1,7 +1,7 @@
 # processors/centre/__init__.py
 from typing import Callable, Dict
 
-from submit_api.data_classes.email_details import EmailDetails
+from epic_cron.data_classes.email_details import EmailDetails
 
 from ...models.email_job import EmailJob
 from .access_denied import process_access_denied

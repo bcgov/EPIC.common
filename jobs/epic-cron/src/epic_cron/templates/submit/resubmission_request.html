@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invitation to Resubmit - {{ package_name }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #003366;
+      background-color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 220px;
+      height: auto;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: left;
+    }
+    .grey-box {
+      background-color: #FAF9F8;
+      padding: 16px;
+      border-left: 4px solid #1a5a96;
+      margin: 20px 0;
+    }
+    .grey-box p {
+      margin: 0 0 10px 0;
+    }
+    .grey-box a {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .grey-box a:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 30px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src={{ logo_url }} alt="EAO Logo"/>
+    </div>
+
+    <div class="content">
+      <p>Hello,</p>
+
+      <p>You can now resubmit your documents for <strong>{{ package_name }}</strong> in EPIC.submit.</p>
+
+      <p>Click the link below to access your submission package.</p>
+
+      <div class="grey-box">
+        <a href="{{ submission_link }}">Access your submission in EPIC.submit</a>
+      </div>
+
+      <p>Please note: After you submit the new version of <strong>{{ package_name }}</strong>, the Management Plan Operations Team will review it. Until the EAO reviews this latest version, the previous version finalized for implementation by the EAO (if any) remains the enforceable version.</p>
+
+      <p>Thank you,</p>
+
+      <p>
+        <strong>EAO Management Plan Operations Team</strong><br>
+        B.C. Environmental Assessment Office<br>
+        Government of British Columbia
+      </p>
+    </div>
+  </div>
+</body>
+</html> 

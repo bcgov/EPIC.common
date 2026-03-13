@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Action Required in EPIC.submit</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #003366;
+      background-color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .cta-link {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .cta-link:hover {
+      text-decoration: underline;
+    }
+    .logo {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 220px;
+      height: auto;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: left;
+    }
+    .highlight-box {
+      background-color: #FAF9F8;
+      padding: 16px;
+      border-left: 4px solid #1a5a96;
+      margin: 20px 0;
+    }
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 30px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+          <img src="{{ logo_url }}" alt="EAO Logo"/>
+    </div>
+
+    <div class="content">
+      <p>Hello {{ submitter_name }},</p>
+
+      <p>You have a request regarding your submission of <strong>{{ package_name }}</strong>.</p>
+
+      <div class="highlight-box">
+        <p>Please log in to the <a href="{{ epic_submit_link }}" class="cta-link">EPIC.submit</a> application at your earliest convenience to review the details and make the necessary updates.</p>
+      </div>
+
+      <p>If you have any questions, feel free to reply to this email.</p>
+
+      <p>Thank you for your prompt attention to this matter.</p>
+      
+      <p>Best regards,</p>
+      <p>
+        <strong>EAO Management Plan Operations Team</strong><br>
+        B.C. Environmental Assessment Office<br>
+        Government of British Columbia
+      </p>
+    </div>
+  </div>
+</body>
+</html>

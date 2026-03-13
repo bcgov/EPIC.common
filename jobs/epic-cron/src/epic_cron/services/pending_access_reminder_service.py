@@ -16,14 +16,14 @@ import logging
 from typing import List
 
 from flask import current_app
-from submit_api.data_classes.email_details import EmailDetails
+from epic_cron.data_classes.email_details import EmailDetails
 from submit_api.exceptions import BadRequestError
 
 from epic_cron.repositories.access_request_repository import (
     AccessRequestRepository,
     PendingAccessRequest,
 )
-from epic_cron.services.ches_service import ChesApiService
+from epic_cron.services.centre_email_service import CentreEmailService
 from epic_cron.services.keycloak_service import KeycloakService
 
 logger = logging.getLogger(__name__)
@@ -105,8 +105,7 @@ def run_pending_access_reminder(repository: AccessRequestRepository) -> bool:
         recipients=[recipient],
     )
 
-    ches = ChesApiService()
-    ches.send_email(email_details, template_sub_directory="centre")
+    CentreEmailService.send_email(email_details)
     logger.info(
         "Sent pending access reminder to %s for %d request(s).",
         recipient,

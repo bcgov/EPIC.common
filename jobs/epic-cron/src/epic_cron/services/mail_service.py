@@ -3,7 +3,7 @@ from functools import partial
 from typing import List
 
 from flask import current_app
-from submit_api.data_classes.email_details import EmailDetails
+from epic_cron.data_classes.email_details import EmailDetails
 from submit_api.exceptions import BadRequestError
 from submit_api.models.email_queue import EmailQueue, EmailStatus
 from submit_api.models.invitations import Invitations as InvitationsModel
@@ -19,6 +19,7 @@ from epic_cron.services.invitation_email_service import InvitationEmailService
 from epic_cron.services.package_submission_email_service import PackageSubmissionEmailService
 from epic_cron.services.request_update_email_service import RequestUpdateEmailService
 from epic_cron.services.resubmission_email_service import ResubmissionEmailService
+from epic_cron.services.template_renderer import TemplateRenderer
 
 
 class EmailService:  # pylint: disable=too-few-public-methods
@@ -160,8 +161,14 @@ class EmailService:  # pylint: disable=too-few-public-methods
     def send_email(email_details: EmailDetails):
         """Send email using the ChesApiService."""
         try:
+            payload = TemplateRenderer.compose_email(
+                email_details=email_details,
+                domain='submit',
+                web_url=current_app.config.get("WEB_URL", ""),
+                environment=current_app.config.get("ENVIRONMENT", ""),
+            )
             email_api_service = ChesApiService()
-            return email_api_service.send_email(email_details, template_sub_directory='submit')
+            return email_api_service.send_email(payload)
         except Exception as e:
             raise BadRequestError(f"Failed to send email: {str(e)}")
 
