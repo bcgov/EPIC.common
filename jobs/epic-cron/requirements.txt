@@ -22,7 +22,7 @@ click==8.3.1
 cryptography==46.0.5
 flake8_import_order==0.19.2
 flask-cors==6.0.2
-flask-jwt-oidc==0.8.0
+flask-jwt-oidc==0.7.0
 flask-marshmallow==1.2.1
 flask-restx==1.3.2
 gunicorn==25.1.0
