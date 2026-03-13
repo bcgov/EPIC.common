@@ -19,12 +19,12 @@ from flask import current_app
 from submit_api.data_classes.email_details import EmailDetails
 from submit_api.exceptions import BadRequestError
 
-from submit_cron.repositories.access_request_repository import (
+from epic_cron.repositories.access_request_repository import (
     AccessRequestRepository,
     PendingAccessRequest,
 )
-from submit_cron.services.ches_service import ChesApiService
-from submit_cron.services.keycloak_service import KeycloakService
+from epic_cron.services.ches_service import ChesApiService
+from epic_cron.services.keycloak_service import KeycloakService
 
 logger = logging.getLogger(__name__)
 

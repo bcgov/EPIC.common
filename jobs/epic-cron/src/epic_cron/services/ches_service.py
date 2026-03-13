@@ -66,7 +66,8 @@ class ChesApiService:
         if not template_name:
             raise ValueError('Template name is required')
 
-        template = Template.get_template(template_name, template_sub_directory)
+        full_template_path = f'{template_sub_directory}/{template_name}' if template_sub_directory else template_name
+        template = Template.get_template(full_template_path)
         if not template:
             raise ValueError('Template not found')
         # logo is taken from submit UI / Web app..

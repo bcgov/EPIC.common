@@ -16,46 +16,39 @@ class ResubmissionEmailService:
 
     @classmethod
     def get_project_admin_users(cls, package: PackageModel) -> list[AccountUserModel]:
-        """Get all PROJECT_ADMIN users for the package's account project."""
-        # Get the account_project_id from the package
+        """Get all PROJECT_ADMIN and ACCOUNT_PRIMARY_ADMIN users for the package's account project."""
         account_project_id = package.account_project_id
-        current_app.logger.info(f"Looking for project admin users for account_project_id: {account_project_id}")
-   
-        # Get the PROJECT_ADMIN role using direct query
-        project_admin_role = (
-            db.session.query(RoleModel)
-            .filter(RoleModel.role_name == RoleEnum.PROJECT_ADMIN.value)
-            .first()
-        )
-        if not project_admin_role:
-            current_app.logger.error(f"Project admin role not found for role_name: {RoleEnum.PROJECT_ADMIN.value}")
-            raise BadRequestError("Project admin role not found")
-        
-        current_app.logger.info(f"Found project admin role with ID: {project_admin_role.id}")
+        current_app.logger.info(f"Looking for admin users for account_project_id: {account_project_id}")
 
-        # Query for all project admin users for this specific account project
-        project_admin_users = (
+        admin_role_names = [RoleEnum.PROJECT_ADMIN.value, RoleEnum.ACCOUNT_PRIMARY_ADMIN.value]
+        admin_roles = (
+            db.session.query(RoleModel)
+            .filter(RoleModel.role_name.in_(admin_role_names))
+            .all()
+        )
+        if not admin_roles:
+            raise BadRequestError("No admin roles found")
+
+        admin_role_ids = [r.id for r in admin_roles]
+
+        admin_users = (
             db.session.query(AccountUserModel)
             .join(UserRoleModel, AccountUserModel.id == UserRoleModel.account_user_id)
             .filter(
                 UserRoleModel.account_project_id == account_project_id,
-                UserRoleModel.role_id == project_admin_role.id,
+                UserRoleModel.role_id.in_(admin_role_ids),
                 UserRoleModel.active
             )
             .all()
         )
 
-        current_app.logger.info(f"Found {len(project_admin_users)} project admin users for account_project_id: {account_project_id}")
-        
-        if not project_admin_users:
-            current_app.logger.warning(f"No project admins found for account_project_id: {account_project_id}")
-            raise BadRequestError("No project admins found for this account project")
+        current_app.logger.info(f"Found {len(admin_users)} admin users for account_project_id: {account_project_id}")
 
-        # Log the email addresses of found users for debugging
-        email_addresses = [user.work_email_address for user in project_admin_users]
-        current_app.logger.info(f"Project admin email addresses: {email_addresses}")
+        if not admin_users:
+            current_app.logger.warning(f"No admin users found for account_project_id: {account_project_id}")
+            raise BadRequestError("No admin users found for this account project")
 
-        return project_admin_users
+        return admin_users
 
     @classmethod
     def prepare_resubmission_request_email(cls, package: PackageModel, project_admin_users: list[AccountUserModel]) -> EmailDetails:
