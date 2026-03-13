@@ -7,7 +7,7 @@ import requests
 from flask import current_app
 from submit_api.data_classes.email_details import EmailDetails
 
-from submit_api.utils.template import Template
+from epic_cron.utils.template import Template
 
 class ChesApiService:
     """CHES api Service class."""

@@ -161,7 +161,7 @@ class EmailService:  # pylint: disable=too-few-public-methods
         """Send email using the ChesApiService."""
         try:
             email_api_service = ChesApiService()
-            return email_api_service.send_email(email_details)
+            return email_api_service.send_email(email_details, template_sub_directory='submit')
         except Exception as e:
             raise BadRequestError(f"Failed to send email: {str(e)}")
 
