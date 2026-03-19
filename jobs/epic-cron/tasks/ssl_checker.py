@@ -1,7 +1,7 @@
 """SSL Certificate Checker using secure cryptography library."""
 import socket
 import ssl
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from cryptography import x509
@@ -13,6 +13,12 @@ from flask import current_app
 
 class SSLChecker:
     """Check SSL certificates for URLs stored in the database."""
+
+    @staticmethod
+    def run_weekly(force_email=None):
+        """Run the weekly SSL workflow: update data, then queue a scheduled digest if needed."""
+        SSLChecker.check_ssl()
+        SSLChecker._queue_scheduled_digest(force_email=force_email)
 
     @staticmethod
     def check_ssl():
@@ -54,14 +60,14 @@ class SSLChecker:
                     continue
 
                 # Check SSL certificate
-                expiry_date, error_message = SSLChecker._get_ssl_expiry_date(app_url.url)
+                cert_details = SSLChecker._get_ssl_details(app_url.url)
                 
-                if expiry_date:
-                    ssl_status = SSLChecker._calculate_ssl_status(expiry_date)
+                if cert_details['ssl_expiry']:
+                    ssl_status = SSLChecker._calculate_ssl_status(cert_details['ssl_expiry'])
                     SSLChecker._update_url_status(
                         session, application_urls, app_url.id,
                         ssl_status=ssl_status,
-                        ssl_expiry=expiry_date,
+                        ssl_expiry=cert_details['ssl_expiry'],
                         ssl_error_message=None
                     )
                 else:
@@ -69,7 +75,7 @@ class SSLChecker:
                         session, application_urls, app_url.id,
                         ssl_status='Error',
                         ssl_expiry=None,
-                        ssl_error_message=error_message
+                        ssl_error_message=cert_details['ssl_error_message']
                     )
             
             session.commit()
@@ -84,8 +90,6 @@ class SSLChecker:
     @staticmethod
     def _calculate_ssl_status(expiry_date):
         """Calculate SSL status based on expiry date."""
-        from datetime import timezone
-        
         # Use timezone-aware datetime for comparison
         now = datetime.now(timezone.utc)
         
@@ -103,32 +107,34 @@ class SSLChecker:
             return 'Valid'
 
     @staticmethod
-    def _update_url_status(session, table, url_id, ssl_status, ssl_expiry, ssl_error_message):
+    def _update_url_status(session, table, url_id, **values):
         """Update SSL status for a URL."""
         update_stmt = table.update().where(
             table.c.id == url_id
         ).values(
-            ssl_status=ssl_status,
-            ssl_expiry=ssl_expiry,
-            ssl_error_message=ssl_error_message,
+            **values,
             last_checked=datetime.utcnow()
         )
         session.execute(update_stmt)
 
     @staticmethod
-    def _get_ssl_expiry_date(url):
-        """
-        Get SSL certificate expiry date using cryptography library.
-        
-        Returns:
-            tuple: (expiry_date, error_message) where expiry_date is None if error occurred
-        """
+    def _get_ssl_details(url):
+        """Return normalized SSL certificate details for a URL."""
+        result = {
+            'ssl_expiry': None,
+            'ssl_error_message': None,
+        }
         parsed_url = urlparse(url)
         hostname = parsed_url.hostname
         port = parsed_url.port or 443
+        scheme = parsed_url.scheme.lower() if parsed_url.scheme else 'https'
 
         if not hostname:
-            return None, "Invalid URL: no hostname"
+            result['ssl_error_message'] = "Invalid URL: no hostname"
+            return result
+        if scheme != 'https':
+            result['ssl_error_message'] = f"Unsupported scheme for SSL check: {scheme}"
+            return result
 
         try:
             # Create SSL context that doesn't verify certificates
@@ -142,31 +148,62 @@ class SSLChecker:
                 with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cert_bin = ssock.getpeercert(binary_form=True)
                     if not cert_bin:
-                        return None, "No certificate returned"
+                        result['ssl_error_message'] = "No certificate returned"
+                        return result
                     
                     # Parse certificate and extract expiry date
                     cert = x509.load_der_x509_certificate(cert_bin, default_backend())
-                    expiry_date = cert.not_valid_after_utc
-                    
-                    # Convert to datetime if needed (newer cryptography versions return datetime)
-                    if not isinstance(expiry_date, datetime):
-                        expiry_date = datetime.fromisoformat(str(expiry_date))
-                    
-                    return expiry_date, None
+                    result['ssl_expiry'] = SSLChecker._normalize_datetime(cert.not_valid_after_utc)
+                    return result
 
         except socket.gaierror:
-            error_msg = f"DNS resolution failed for {hostname}"
-            print(error_msg)
-            return None, error_msg
+            result['ssl_error_message'] = f"DNS resolution failed for {hostname}"
         except socket.timeout:
-            error_msg = f"Connection timeout to {hostname}"
-            print(error_msg)
-            return None, error_msg
+            result['ssl_error_message'] = f"Connection timeout to {hostname}"
         except ssl.SSLError as e:
-            error_msg = f"SSL error for {hostname}: {str(e)}"
-            print(error_msg)
-            return None, error_msg
+            result['ssl_error_message'] = f"SSL error for {hostname}: {str(e)}"
         except Exception as e:
-            error_msg = f"Error fetching cert for {hostname}: {str(e)}"
-            print(error_msg)
-            return None, error_msg
+            result['ssl_error_message'] = f"Error fetching cert for {hostname}: {str(e)}"
+
+        print(result['ssl_error_message'])
+        return result
+
+    @staticmethod
+    def _normalize_datetime(value):
+        """Normalize aware datetimes to naive UTC for storage in centre DB."""
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+    @staticmethod
+    def _queue_scheduled_digest(now=None, force_email=None):
+        """Queue the monthly or follow-up digest based on the current week of month."""
+        from tasks.ssl_weekly_report import REPORT_TYPE_FOLLOWUP, REPORT_TYPE_MONTHLY, SSLWeeklyReport
+
+        now = now or datetime.utcnow()
+
+        if force_email == "SEND_WEEKLY":
+            print("Forced monthly SSL digest requested.")
+            SSLWeeklyReport.generate_report(REPORT_TYPE_MONTHLY)
+            return
+
+        if force_email == "SEND_BIWEEKLY":
+            print("Forced SSL follow-up digest requested.")
+            SSLWeeklyReport.generate_report(REPORT_TYPE_FOLLOWUP)
+            return
+
+        day_of_month = now.day
+
+        if day_of_month <= 7:
+            print("Start-of-month weekly run detected. Queueing monthly SSL digest.")
+            SSLWeeklyReport.generate_report(REPORT_TYPE_MONTHLY)
+            return
+
+        if day_of_month <= 14:
+            print("Second weekly run of the month detected. Queueing SSL follow-up digest if needed.")
+            SSLWeeklyReport.generate_report(REPORT_TYPE_FOLLOWUP)
+            return
+
+        print("No SSL digest scheduled for this weekly run.")

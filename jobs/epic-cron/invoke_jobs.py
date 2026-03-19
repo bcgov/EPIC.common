@@ -32,7 +32,7 @@ def register_shellcontext(app):
     app.shell_context_processor(shell_context)
 
 
-def run(job_name, target_system=None, file_path=None):
+def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
     """Main function to run the job."""
     application = create_app()
 
@@ -59,15 +59,21 @@ def run(job_name, target_system=None, file_path=None):
 
         elif job_name == 'CHECK_SSL':
             from tasks.ssl_checker import SSLChecker
-            print('Running SSL Checker...')
-            SSLChecker.check_ssl()
-            application.logger.info('<<<< Completed SSL Check >>>')
+            print('Running weekly SSL workflow...')
+            SSLChecker.run_weekly(force_email=ssl_email_option)
+            application.logger.info('<<<< Completed Weekly SSL Workflow >>>')
 
         elif job_name == 'SSL_WEEKLY':
             from tasks.ssl_weekly_report import SSLWeeklyReport
-            print('Generating Weekly SSL Report...')
-            SSLWeeklyReport.generate_report()
-            application.logger.info('<<<< Completed Weekly SSL Report >>>')
+            print('Generating Monthly SSL Digest...')
+            SSLWeeklyReport.generate_report('monthly')
+            application.logger.info('<<<< Completed Monthly SSL Digest >>>')
+
+        elif job_name == 'SSL_FOLLOWUP':
+            from tasks.ssl_weekly_report import SSLWeeklyReport
+            print('Generating SSL Follow-up Digest...')
+            SSLWeeklyReport.generate_report('followup')
+            application.logger.info('<<<< Completed SSL Follow-up Digest >>>')
 
         else:
             application.logger.debug(f'No valid job_name passed: {job_name}. Exiting without running any tasks.')
@@ -79,7 +85,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     if not args:
-        print("ERROR: You must provide a target system, 'SCAN_VIRUS', 'CHECK_SSL', or 'SSL_WEEKLY'.")
+        print("ERROR: You must provide a target system, 'SCAN_VIRUS', 'CHECK_SSL', 'SSL_WEEKLY', or 'SSL_FOLLOWUP'.")
         sys.exit(1)
 
     if args[0] == "SCAN_VIRUS":
@@ -90,10 +96,18 @@ if __name__ == "__main__":
         run("SCAN_VIRUS", target_system=None, file_path=file_path)
 
     elif args[0] == "CHECK_SSL":
-        run("CHECK_SSL")
+        ssl_email_option = args[1] if len(args) > 1 else None
+        allowed_options = {"SEND_WEEKLY", "SEND_BIWEEKLY"}
+        if ssl_email_option and ssl_email_option not in allowed_options:
+            print("ERROR: CHECK_SSL optional flag must be SEND_WEEKLY or SEND_BIWEEKLY.")
+            sys.exit(1)
+        run("CHECK_SSL", ssl_email_option=ssl_email_option)
 
     elif args[0] == "SSL_WEEKLY":
         run("SSL_WEEKLY")
+
+    elif args[0] == "SSL_FOLLOWUP":
+        run("SSL_FOLLOWUP")
 
     else:
         # Assume EXTRACT_PROJECT with target_system
@@ -102,6 +116,8 @@ if __name__ == "__main__":
             target_system = TargetSystem(args[0])
             run("EXTRACT_PROJECT", target_system)
         except ValueError:
-            print(f"ERROR: Invalid target system '{args[0]}'. Must be one of {[ts.value for ts in TargetSystem]} or CHECK_SSL/SSL_WEEKLY")
+            print(
+                f"ERROR: Invalid target system '{args[0]}'. "
+                f"Must be one of {[ts.value for ts in TargetSystem]} or CHECK_SSL/SSL_WEEKLY/SSL_FOLLOWUP"
+            )
             sys.exit(1)
-
