@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from datetime import datetime
 from flask import Flask
 from utils.logger import setup_logging
 import config
@@ -57,6 +58,20 @@ def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
             VirusScanner.scan_file_from_path(file_path)
             application.logger.info(f'<<<< Completed Virus Scan for {file_path} >>>')
 
+        elif job_name == 'EMAIL':
+            if target_system == 'CENTRE':
+                from tasks.centre_mail import CentreMailer
+
+                application.logger.info(f'Starting Centre Email Sending At {datetime.now()}')
+                CentreMailer.send_mail()
+                application.logger.info('<<<< Completed Centre Email Task >>>>')
+            else:
+                from tasks.submit_mail import SubmitMailer
+
+                application.logger.info(f'Starting Submit Email Sending At {datetime.now()}')
+                SubmitMailer.send_mail()
+                application.logger.info('<<<< Completed Submit Email Task >>>>')
+
         elif job_name == 'CHECK_SSL':
             from tasks.ssl_checker import SSLChecker
             print('Running weekly SSL workflow...')
@@ -85,7 +100,10 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     if not args:
-        print("ERROR: You must provide a target system, 'SCAN_VIRUS', 'CHECK_SSL', 'SSL_WEEKLY', or 'SSL_FOLLOWUP'.")
+        print(
+            "ERROR: You must provide a target system, 'SCAN_VIRUS', 'EMAIL', "
+            "'CHECK_SSL', 'SSL_WEEKLY', or 'SSL_FOLLOWUP'."
+        )
         sys.exit(1)
 
     if args[0] == "SCAN_VIRUS":
@@ -94,6 +112,10 @@ if __name__ == "__main__":
             sys.exit(1)
         file_path = args[1]
         run("SCAN_VIRUS", target_system=None, file_path=file_path)
+
+    elif args[0] == "EMAIL":
+        target_system = args[1] if len(args) > 1 else None
+        run("EMAIL", target_system=target_system)
 
     elif args[0] == "CHECK_SSL":
         ssl_email_option = args[1] if len(args) > 1 else None
@@ -118,6 +140,7 @@ if __name__ == "__main__":
         except ValueError:
             print(
                 f"ERROR: Invalid target system '{args[0]}'. "
-                f"Must be one of {[ts.value for ts in TargetSystem]} or CHECK_SSL/SSL_WEEKLY/SSL_FOLLOWUP"
+                f"Must be one of {[ts.value for ts in TargetSystem]} or "
+                "EMAIL/CHECK_SSL/SSL_WEEKLY/SSL_FOLLOWUP"
             )
             sys.exit(1)

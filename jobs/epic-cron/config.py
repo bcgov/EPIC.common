@@ -105,7 +105,52 @@ class _Config():  # pylint: disable=too-few-public-methods
         f"postgresql://{CONDITION_DB_USER}:{CONDITION_DB_PASSWORD}@{CONDITION_DB_HOST}:{int(CONDITION_DB_PORT)}/{CONDITION_DB_NAME}"
     )
 
-    # CENTRE DB Configuration
+    # Debug logging for detailed logs in Project Extractor
+    ENABLE_DETAILED_LOGS = os.getenv("ENABLE_DETAILED_LOGS", "false").lower() == "true"
+
+    TRACK_API_BASE_URL = os.getenv('TRACK_API_BASE_URL')
+    CONDITION_API_BASE_URL = os.getenv("CONDITION_API_BASE_URL")
+    KEYCLOAK_BASE_URL = os.getenv('KEYCLOAK_BASE_URL')
+    KEYCLOAK_REALM_NAME = os.getenv('KEYCLOAK_REALM_NAME', 'eao-epic')
+    SERVICE_ACCOUNT_ID = os.getenv('SERVICE_ACCOUNT_ID', os.getenv('KEYCLOAK_SERVICE_ACCOUNT_ID'))
+    SERVICE_ACCOUNT_SECRET = os.getenv('SERVICE_ACCOUNT_SECRET', os.getenv('KEYCLOAK_SERVICE_ACCOUNT_SECRET'))
+    KEYCLOAK_SERVICE_ACCOUNT_ID = os.getenv('KEYCLOAK_SERVICE_ACCOUNT_ID', os.getenv('SERVICE_ACCOUNT_ID'))
+    KEYCLOAK_SERVICE_ACCOUNT_SECRET = os.getenv(
+        'KEYCLOAK_SERVICE_ACCOUNT_SECRET',
+        os.getenv('SERVICE_ACCOUNT_SECRET'),
+    )
+    CONNECT_TIMEOUT = int(os.getenv('CONNECT_TIMEOUT', 60))
+    # TODO separate out clients for APIs and user management.
+    # TODO API client wont need user management roles in keycloak.
+
+    CLAMAV_HOST = os.getenv('CLAMAV_HOST')
+    CLAMAV_PORT = os.getenv('CLAMAV_PORT')
+
+    # CHES Configuration for Email Service
+    CHES_TOKEN_ENDPOINT = os.getenv('CHES_TOKEN_ENDPOINT')
+    CHES_CLIENT_ID = os.getenv('CHES_CLIENT_ID')
+    CHES_CLIENT_SECRET = os.getenv('CHES_CLIENT_SECRET')
+    CHES_BASE_URL = os.getenv('CHES_BASE_URL')
+    
+    # Submit Web Configuration
+    WEB_URL = os.getenv('WEB_URL')
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+    STAFF_SUPPORT_MAIL_ID = os.getenv('STAFF_SUPPORT_MAIL_ID', '')
+    SIGNUP_URL_PATH = os.getenv('SIGNUP_URL_PATH', '/proponent/registration')
+    
+    # Condition API Configuration
+    CONDITION_API_BASE_URL = os.getenv('CONDITION_API_BASE_URL')
+    
+    # JWT_OIDC Settings for Submit
+    JWT_OIDC_WELL_KNOWN_CONFIG = os.getenv('JWT_OIDC_WELL_KNOWN_CONFIG')
+    JWT_OIDC_ALGORITHMS = os.getenv('JWT_OIDC_ALGORITHMS', 'RS256')
+    JWT_OIDC_JWKS_URI = os.getenv('JWT_OIDC_JWKS_URI')
+    JWT_OIDC_ISSUER = os.getenv('JWT_OIDC_ISSUER')
+    JWT_OIDC_AUDIENCE = os.getenv('JWT_OIDC_AUDIENCE', 'account')
+    JWT_OIDC_CACHING_ENABLED = os.getenv('JWT_OIDC_CACHING_ENABLED', 'True')
+    JWT_OIDC_JWKS_CACHE_TIMEOUT = 300
+    
+    # Centre DB Configuration (for centre emailer)
     CENTRE_DB_USER = os.getenv("CENTRE_DATABASE_USERNAME", "")
     CENTRE_DB_PASSWORD = os.getenv("CENTRE_DATABASE_PASSWORD", "")
     CENTRE_DB_NAME = os.getenv("CENTRE_DATABASE_NAME", "")
@@ -114,21 +159,16 @@ class _Config():  # pylint: disable=too-few-public-methods
     CENTRE_DATABASE_URI = (
         f"postgresql://{CENTRE_DB_USER}:{CENTRE_DB_PASSWORD}@{CENTRE_DB_HOST}:{int(CENTRE_DB_PORT)}/{CENTRE_DB_NAME}"
     )
-
-    # Debug logging for detailed logs in Project Extractor
-    ENABLE_DETAILED_LOGS = os.getenv("ENABLE_DETAILED_LOGS", "false").lower() == "true"
-
-    TRACK_API_BASE_URL=os.getenv('TRACK_API_BASE_URL')
-    CONDITION_API_BASE_URL = os.getenv("CONDITION_API_BASE_URL")
-    KEYCLOAK_BASE_URL = os.getenv('KEYCLOAK_BASE_URL')
-    KEYCLOAK_REALM_NAME = os.getenv('KEYCLOAK_REALM_NAME', 'eao-epic')
-    KEYCLOAK_SERVICE_ACCOUNT_ID = os.getenv('KEYCLOAK_SERVICE_ACCOUNT_ID')
-    KEYCLOAK_SERVICE_ACCOUNT_SECRET = os.getenv('KEYCLOAK_SERVICE_ACCOUNT_SECRET')
-    # TODO separate out clients for APIs and user management.
-    # TODO API client wont need user management roles in keycloak.
-
-    CLAMAV_HOST = os.getenv('CLAMAV_HOST')
-    CLAMAV_PORT = os.getenv('CLAMAV_PORT')
+    
+    # For backward compatibility with submit_cron code
+    SQLALCHEMY_DATABASE_URI = SUBMIT_DATABASE_URI
+    
+    # Pending access request reminder (Centre)
+    PENDING_ACCESS_REMINDER_HOURS = int(os.getenv('PENDING_ACCESS_REMINDER_HOURS', '48'))
+    PENDING_ACCESS_REMINDER_EMAIL = os.getenv('PENDING_ACCESS_REMINDER_EMAIL', '')
+    REQUEST_ACCESS_BASE_URL = os.getenv('REQUEST_ACCESS_BASE_URL', 'http://localhost:5173')
+    
+    ENVIRONMENT = os.getenv('ENVIRONMENT', os.getenv('ENV_NAME', ''))
     EPIC_CENTRE_WEB_URL = os.getenv("EPIC_CENTRE_WEB_URL", "https://centre.eao.gov.bc.ca/application-urls")
     SSL_NOTIFICATION_RECIPIENTS = os.getenv("SSL_NOTIFICATION_RECIPIENTS", "EPIC.Devops@gov.bc.ca")
     SSL_NOTIFICATION_SENDER = os.getenv("SSL_NOTIFICATION_SENDER", "EPIC.centre@gov.bc.ca")

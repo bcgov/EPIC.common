@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Reminder: Pending EPIC Access Requests</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #003366;
+      background-color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 220px;
+      height: auto;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: left;
+    }
+    .grey-box {
+      background-color: #FAF9F8;
+      padding: 16px;
+      border-left: 4px solid #1a5a96;
+      margin: 20px 0;
+    }
+    .grey-box p {
+      margin: 0 0 10px 0;
+    }
+    .grey-box a {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .grey-box a:hover {
+      text-decoration: underline;
+    }
+    .user-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .user-list li {
+      margin: 8px 0;
+    }
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 30px;
+      text-align: left;
+    }
+    .cta-link {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .cta-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="{{ logo_url }}" alt="EPIC Logo"/>
+    </div>
+
+    <div class="content">
+      <p>Hello,</p>
+
+      <p>This is a reminder:</p>
+
+      <p>The user(s) below requested access to an EPIC application over {{ hours }}h ago. This request hasn't been processed yet. Click the user name to access their request in EPIC.auth.</p>
+
+      <p><strong>Users</strong></p>
+      <div class="grey-box">
+        <ul class="user-list">
+          {% for user in users %}
+          <li><a href="{{ user.url }}">{{ user.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <p>You can also visit the user list to view all requests on one page.</p>
+
+      <div class="grey-box">
+        <p><a class="cta-link" href="{{ review_all_url }}">Review Request(s) in EPIC.centre</a></p>
+      </div>
+
+      <p>A confirmation email will be sent to the requester when their access level is updated in EPIC.centre.</p>
+
+      <p>Thank you,</p>
+      <p><strong>EPIC.centre System</strong></p>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>

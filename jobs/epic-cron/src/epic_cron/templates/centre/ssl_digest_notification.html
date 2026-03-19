@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>
+    {% if report_type == "followup" %}
+      EPIC SSL Follow-up for {{ report_month_label }}
+    {% else %}
+      EPIC SSL Monthly Update for {{ report_month_label }}
+    {% endif %}
+  </title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #003366; background-color: #ffffff; padding: 20px; }
+    .container { max-width: 760px; margin: auto; padding: 20px; }
+    .logo { text-align: left; margin-bottom: 20px; }
+    .logo img { max-width: 220px; height: auto; }
+    .content { font-size: 16px; line-height: 1.6; color: #333; text-align: left; }
+    .grey-box { background-color: #FAF9F8; padding: 16px; border-left: 4px solid #1a5a96; margin: 20px 0; }
+    .summary-table { width: 100%; border-collapse: collapse; margin: 18px 0 24px; }
+    .summary-table th, .summary-table td { border: 1px solid #d9e2ec; padding: 10px 12px; text-align: left; vertical-align: top; }
+    .summary-table th { background-color: #f1f5f9; color: #0f172a; }
+    .detail-card { border: 1px solid #d9e2ec; background-color: #ffffff; padding: 16px; margin: 16px 0; }
+    .detail-card h3 { margin: 0 0 8px; color: #0f172a; font-size: 18px; }
+    .meta-row { margin: 6px 0; }
+    .meta-label { font-weight: bold; color: #0f172a; }
+    .cta-link { color: #1a5a96; font-weight: bold; text-decoration: none; }
+    .cta-link:hover { text-decoration: underline; }
+    .footer { font-size: 12px; color: #666; margin-top: 30px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="{{ logo_url }}" alt="EPIC Logo"/>
+    </div>
+    <div class="content">
+      {% if report_type == "followup" %}
+        <p>Hello,</p>
+        <p>This is a friendly follow-up on SSL certificates that still need attention in {{ report_month_label }}.</p>
+      {% else %}
+        <p>Hello,</p>
+        <p>Here is your EPIC SSL monthly update for {{ report_month_label }}.</p>
+      {% endif %}
+
+      {% if all_clear %}
+        <div class="grey-box">
+          <p><strong>You are all good for {{ report_month_label }}.</strong></p>
+          <p>There are no SSL expiries or SSL check errors that need staff action this month.</p>
+        </div>
+        <p>You can still review the current list any time in <a class="cta-link" href="{{ centre_url }}">EPIC.centre Application URLs/SSL</a>.</p>
+      {% else %}
+        <div class="grey-box">
+          <p><strong>{{ summary.total_action_count }} SSL item(s) need attention in {{ report_month_label }}.</strong></p>
+          <p>Expired: {{ summary.expired_count }}<br/>Due this month: {{ summary.due_this_month_count }}<br/>SSL errors: {{ summary.error_count }}</p>
+        </div>
+        <p>Please review the details below and update the renewal tracking fields in <a class="cta-link" href="{{ centre_url }}">EPIC.centre Application URLs/SSL</a> as work progresses.</p>
+        <table class="summary-table" role="presentation">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Application</th>
+              <th>Environment</th>
+              <th>Expiry / Timing</th>
+              <th>Renewal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td>{{ item.category }}</td>
+              <td>{{ item.app_name }}</td>
+              <td>{{ item.environment }}</td>
+              <td>{{ item.expiry_date }}<br/>{{ item.days_remaining }}</td>
+              <td>{{ item.renewal_status }}{% if item.ticket_reference %}<br/>Ticket: {{ item.ticket_reference }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p><strong>Detailed items</strong></p>
+        {% for item in items %}
+        <div class="detail-card">
+          <h3>{{ item.app_name }} - {{ item.environment }}</h3>
+          <div class="meta-row"><span class="meta-label">Category:</span> {{ item.category }}</div>
+          <div class="meta-row"><span class="meta-label">URL:</span> {% if item.url %}<a class="cta-link" href="{{ item.url }}">{{ item.url }}</a>{% else %}Not recorded{% endif %}</div>
+          <div class="meta-row"><span class="meta-label">SSL status:</span> {{ item.ssl_status }}</div>
+          <div class="meta-row"><span class="meta-label">Expiry date:</span> {{ item.expiry_date }}</div>
+          <div class="meta-row"><span class="meta-label">Timing:</span> {{ item.days_remaining }}</div>
+          <div class="meta-row"><span class="meta-label">Ticket reference:</span> {{ item.ticket_reference if item.ticket_reference else "Not recorded" }}</div>
+          <div class="meta-row"><span class="meta-label">Renewal status:</span> {{ item.renewal_status }}</div>
+          <div class="meta-row"><span class="meta-label">Renewal comments:</span> {{ item.renewal_comments if item.renewal_comments else "No comments recorded" }}</div>
+          {% if item.ssl_error_message %}
+          <div class="meta-row"><span class="meta-label">SSL error:</span> {{ item.ssl_error_message }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% endif %}
+      <p>Generated on {{ generated_at }}.</p>
+      <p>Thank you,</p>
+      <p><strong>EPIC.centre System</strong></p>
+    </div>
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
