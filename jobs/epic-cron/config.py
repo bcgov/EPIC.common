@@ -170,7 +170,7 @@ class _Config():  # pylint: disable=too-few-public-methods
     
     ENVIRONMENT = os.getenv('ENVIRONMENT', os.getenv('ENV_NAME', ''))
     EPIC_CENTRE_WEB_URL = os.getenv("EPIC_CENTRE_WEB_URL", "https://centre.eao.gov.bc.ca/application-urls")
-    SSL_NOTIFICATION_RECIPIENTS = os.getenv("SSL_NOTIFICATION_RECIPIENTS", "EPIC.Devops@gov.bc.ca")
+    SSL_NOTIFICATION_RECIPIENTS = os.getenv("SSL_NOTIFICATION_RECIPIENTS", "")
     SSL_NOTIFICATION_SENDER = os.getenv("SSL_NOTIFICATION_SENDER", "EPIC.centre@gov.bc.ca")
 
 class DevConfig(_Config):  # pylint: disable=too-few-public-methods

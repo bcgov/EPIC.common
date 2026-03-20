@@ -15,20 +15,20 @@ def _require(payload: Dict[str, Any], fields: List[str]) -> None:
 def _build_subject(payload: Dict[str, Any]) -> str:
     report_type = payload["report_type"]
     report_month_label = payload["report_month_label"]
+    environment_label = (payload.get("environment_label") or "").strip()
     total_actions = payload["summary"]["total_action_count"]
     all_clear = payload["all_clear"]
-
-    if report_type == "followup":
-        if all_clear:
-            return f"EPIC SSL Follow-up for {report_month_label}: All clear"
-        item_label = "item still needs attention" if total_actions == 1 else "items still need attention"
-        return f"EPIC SSL Follow-up for {report_month_label}: {total_actions} {item_label}"
+    environment_prefix = f"[{environment_label.upper()}] " if environment_label else ""
 
     if all_clear:
-        return f"EPIC SSL Monthly Update for {report_month_label}: All clear"
+        return f"{environment_prefix}EPIC SSL for {report_month_label}: all good"
 
-    item_label = "item needs attention" if total_actions == 1 else "items need attention"
-    return f"EPIC SSL Monthly Update for {report_month_label}: {total_actions} {item_label}"
+    if report_type == "followup":
+        item_label = "item still needs attention this month" if total_actions == 1 else "items still need attention this month"
+        return f"{environment_prefix}EPIC SSL follow-up for {report_month_label}: {total_actions} {item_label}"
+
+    item_label = "item expiring this month" if total_actions == 1 else "items expiring this month"
+    return f"{environment_prefix}EPIC SSL for {report_month_label}: {total_actions} {item_label}"
 
 
 def process_ssl_digest_notification(job: EmailJob) -> EmailDetails:
@@ -68,6 +68,7 @@ def process_ssl_digest_notification(job: EmailJob) -> EmailDetails:
             "generated_at": payload["generated_at"],
             "report_type": payload["report_type"],
             "report_month_label": payload["report_month_label"],
+            "environment_label": payload.get("environment_label", ""),
             "all_clear": payload["all_clear"],
             "summary": summary,
             "items": items,

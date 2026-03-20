@@ -38,6 +38,8 @@ class SSLChecker:
         session = Session()
 
         try:
+            cert_cache = {}
+
             # Query active URLs
             query = session.query(application_urls).filter(
                 application_urls.c.is_active == True
@@ -47,9 +49,11 @@ class SSLChecker:
 
             for app_url in urls:
                 print(f"Checking {app_url.app_name} ({app_url.environment}): {app_url.url}")
-                
+
+                certificate_target = SSLChecker._get_certificate_target(app_url.url)
+
                 # Skip managed DevOps URLs
-                if "devops.gov.bc.ca" in app_url.url:
+                if "devops.gov.bc.ca" in certificate_target:
                     print(f"Skipping SSL check for managed URL: {app_url.url}")
                     SSLChecker._update_url_status(
                         session, application_urls, app_url.id,
@@ -59,8 +63,10 @@ class SSLChecker:
                     )
                     continue
 
-                # Check SSL certificate
-                cert_details = SSLChecker._get_ssl_details(app_url.url)
+                # Reuse the same certificate lookup for routes on the same host.
+                if certificate_target not in cert_cache:
+                    cert_cache[certificate_target] = SSLChecker._get_ssl_details(certificate_target)
+                cert_details = cert_cache[certificate_target]
                 
                 if cert_details['ssl_expiry']:
                     ssl_status = SSLChecker._calculate_ssl_status(cert_details['ssl_expiry'])
@@ -178,12 +184,23 @@ class SSLChecker:
         return value.astimezone(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
+    def _get_certificate_target(url):
+        """Return the origin used for certificate checks so path-based routes share one lookup."""
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.hostname:
+            return url
+
+        port = f":{parsed_url.port}" if parsed_url.port else ""
+        return f"{parsed_url.scheme.lower()}://{parsed_url.hostname}{port}"
+
+    @staticmethod
     def _queue_scheduled_digest(now=None, force_email=None):
         """Queue the monthly or follow-up digest based on the current week of month."""
         from tasks.ssl_weekly_report import REPORT_TYPE_FOLLOWUP, REPORT_TYPE_MONTHLY, SSLWeeklyReport
 
         now = now or datetime.utcnow()
 
+        print('--force_emailforce_emailforce_email-------',force_email)
         if force_email == "SEND_WEEKLY":
             print("Forced monthly SSL digest requested.")
             SSLWeeklyReport.generate_report(REPORT_TYPE_MONTHLY)

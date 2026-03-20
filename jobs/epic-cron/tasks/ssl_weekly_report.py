@@ -1,5 +1,6 @@
 """Queue friendly SSL digest emails for EPIC.centre staff."""
 from datetime import datetime
+from urllib.parse import urlparse
 
 from flask import current_app
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, and_, create_engine, func
@@ -65,6 +66,7 @@ class SSLWeeklyReport:
             next_month_start = SSLWeeklyReport._next_month_start(month_start)
             month_label = month_start.strftime("%B %Y")
             month_key = month_start.strftime("%Y-%m")
+            environment_label = (current_app.config.get("ENVIRONMENT", "") or "").strip()
 
             if SSLWeeklyReport._digest_already_queued(
                 session,
@@ -103,6 +105,7 @@ class SSLWeeklyReport:
                 "report_type": report_type,
                 "report_month_label": month_label,
                 "report_month_key": month_key,
+                "environment_label": environment_label,
                 "all_clear": all_clear,
                 "summary": summary,
                 "items": digest_items,
@@ -129,34 +132,30 @@ class SSLWeeklyReport:
 
     @staticmethod
     def _build_digest_items(urls, now, next_month_start):
-        """Build actionable SSL items for the current month."""
+        """Build SSL items expiring this month, grouped by certificate host."""
         actionable = []
-        for url in urls:
-            if url.ssl_status == "Managed":
+        grouped_urls = SSLWeeklyReport._group_urls_by_certificate(urls)
+
+        for certificate_group in grouped_urls:
+            representative = SSLWeeklyReport._select_representative_url(certificate_group["urls"])
+            if representative.ssl_status == "Managed":
                 continue
 
             item = None
-            if url.ssl_status == "Error":
-                item = SSLWeeklyReport._build_item(
-                    url=url,
-                    category="SSL Error",
-                    expiry_date_label="Unknown",
-                    days_remaining_label="Check now",
-                )
-            elif url.ssl_expiry:
-                if url.ssl_expiry < now:
+            if representative.ssl_expiry:
+                if representative.ssl_expiry < now:
                     item = SSLWeeklyReport._build_item(
-                        url=url,
+                        certificate_group=certificate_group,
                         category="Expired",
-                        expiry_date_label=url.ssl_expiry.strftime("%Y-%m-%d"),
+                        expiry_date_label=representative.ssl_expiry.strftime("%Y-%m-%d"),
                         days_remaining_label="Expired",
                     )
-                elif url.ssl_expiry < next_month_start:
-                    days_left = max((url.ssl_expiry - now).days, 0)
+                elif representative.ssl_expiry < next_month_start:
+                    days_left = max((representative.ssl_expiry - now).days, 0)
                     item = SSLWeeklyReport._build_item(
-                        url=url,
-                        category="Due This Month",
-                        expiry_date_label=url.ssl_expiry.strftime("%Y-%m-%d"),
+                        certificate_group=certificate_group,
+                        category="Expiring This Month",
+                        expiry_date_label=representative.ssl_expiry.strftime("%Y-%m-%d"),
                         days_remaining_label=f"{days_left} day(s) left",
                     )
 
@@ -166,27 +165,36 @@ class SSLWeeklyReport:
         actionable.sort(
             key=lambda item: (
                 SSLWeeklyReport._category_order(item["category"]),
-                item["app_name"],
-                item["environment"],
+                item["certificate_host"],
             )
         )
         return actionable
 
     @staticmethod
-    def _build_item(url, category, expiry_date_label, days_remaining_label):
-        """Build a digest row for a single URL."""
+    def _build_item(certificate_group, category, expiry_date_label, days_remaining_label):
+        """Build a digest row for a certificate group."""
+        representative = SSLWeeklyReport._select_representative_url(certificate_group["urls"])
+        linked_routes = []
+        for url in certificate_group["urls"]:
+            linked_routes.append(
+                {
+                    "app_name": url.app_name,
+                    "environment": url.environment or "Unknown",
+                    "url": url.url or "",
+                    "inherits_ssl": SSLWeeklyReport._inherits_ssl_from_host(url.url),
+                }
+            )
+
         return {
-            "app_name": url.app_name,
-            "environment": url.environment or "Unknown",
-            "url": url.url or "",
+            "certificate_host": certificate_group["host"],
+            "certificate_url": certificate_group["origin"],
             "category": category,
-            "ssl_status": url.ssl_status or "Unknown",
             "expiry_date": expiry_date_label,
             "days_remaining": days_remaining_label,
-            "ticket_reference": url.ticket_reference or "",
-            "renewal_status": (url.renewal_status or "NONE").replace("_", " ").title(),
-            "renewal_comments": url.renewal_comments or "",
-            "ssl_error_message": url.ssl_error_message or "",
+            "linked_routes": linked_routes,
+            "linked_route_count": len(linked_routes),
+            "linked_app_count": len({url.app_name for url in certificate_group["urls"]}),
+            "representative_url": representative.url or "",
         }
 
     @staticmethod
@@ -194,14 +202,12 @@ class SSLWeeklyReport:
         """Build digest counts for the email header."""
         expired_count = len([item for item in items if item["category"] == "Expired"])
         due_this_month_count = len(
-            [item for item in items if item["category"] == "Due This Month"]
+            [item for item in items if item["category"] == "Expiring This Month"]
         )
-        error_count = len([item for item in items if item["category"] == "SSL Error"])
         total_action_count = len(items)
         return {
             "expired_count": expired_count,
             "due_this_month_count": due_this_month_count,
-            "error_count": error_count,
             "total_action_count": total_action_count,
         }
 
@@ -242,11 +248,10 @@ class SSLWeeklyReport:
 
     @staticmethod
     def _category_order(category):
-        """Sort expired first, then due this month, then SSL errors."""
+        """Sort expired first, then expiring this month."""
         order = {
             "Expired": 0,
-            "Due This Month": 1,
-            "SSL Error": 2,
+            "Expiring This Month": 1,
         }
         return order.get(category, 99)
 
@@ -266,3 +271,73 @@ class SSLWeeklyReport:
 
         fallback = current_app.config.get("DST_EMAIL", "EPIC.Devops@gov.bc.ca")
         return [fallback] if fallback else ["EPIC.Devops@gov.bc.ca"]
+
+    @staticmethod
+    def _group_urls_by_certificate(urls):
+        """Group URLs by certificate origin so shared host certs are reported once."""
+        grouped = {}
+        for url in urls:
+            origin, host = SSLWeeklyReport._get_certificate_origin(url.url)
+            key = origin.lower()
+            if key not in grouped:
+                grouped[key] = {
+                    "origin": origin,
+                    "host": host,
+                    "urls": [],
+                }
+            grouped[key]["urls"].append(url)
+
+        return list(grouped.values())
+
+    @staticmethod
+    def _get_certificate_origin(url):
+        """Return the URL origin used to determine shared host certificates."""
+        parsed = urlparse(url or "")
+        if not parsed.scheme or not parsed.hostname:
+            return (url or "Unknown URL"), (url or "Unknown URL")
+
+        port = f":{parsed.port}" if parsed.port else ""
+        origin = f"{parsed.scheme.lower()}://{parsed.hostname}{port}"
+        host = f"{parsed.hostname}{port}"
+        return origin, host
+
+    @staticmethod
+    def _inherits_ssl_from_host(url):
+        """Return True when the route inherits SSL from a host-level certificate."""
+        parsed = urlparse(url or "")
+        return bool(parsed.hostname and parsed.path and parsed.path not in ("", "/"))
+
+    @staticmethod
+    def _select_representative_url(urls):
+        """Pick the row that best represents the certificate group for renewal tracking."""
+        return sorted(
+            urls,
+            key=lambda url: (
+                SSLWeeklyReport._status_priority(url.ssl_status),
+                0 if SSLWeeklyReport._has_tracking_data(url) else 1,
+                0 if not SSLWeeklyReport._inherits_ssl_from_host(url.url) else 1,
+                url.app_name or "",
+                url.environment or "",
+            ),
+        )[0]
+
+    @staticmethod
+    def _has_tracking_data(url):
+        """Return True when the row has renewal metadata entered by staff."""
+        return bool(
+            (url.ticket_reference and url.ticket_reference.strip())
+            or (url.renewal_comments and url.renewal_comments.strip())
+            or ((url.renewal_status or "NONE") != "NONE")
+        )
+
+    @staticmethod
+    def _status_priority(status):
+        """Rank the most urgent SSL status first."""
+        order = {
+            "Expired": 0,
+            "Error": 1,
+            "Expiring Soon": 2,
+            "Valid": 3,
+            "Managed": 4,
+        }
+        return order.get(status or "Unknown", 99)
