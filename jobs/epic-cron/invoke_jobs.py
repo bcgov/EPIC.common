@@ -74,21 +74,9 @@ def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
 
         elif job_name == 'CHECK_SSL':
             from tasks.ssl_checker import SSLChecker
-            print('Running weekly SSL workflow...')
-            SSLChecker.run_weekly(force_email=ssl_email_option)
-            application.logger.info('<<<< Completed Weekly SSL Workflow >>>')
-
-        elif job_name == 'SSL_WEEKLY':
-            from tasks.ssl_weekly_report import SSLWeeklyReport
-            print('Generating Monthly SSL Digest...')
-            SSLWeeklyReport.generate_report('monthly')
-            application.logger.info('<<<< Completed Monthly SSL Digest >>>')
-
-        elif job_name == 'SSL_FOLLOWUP':
-            from tasks.ssl_weekly_report import SSLWeeklyReport
-            print('Generating SSL Follow-up Digest...')
-            SSLWeeklyReport.generate_report('followup')
-            application.logger.info('<<<< Completed SSL Follow-up Digest >>>')
+            print('Running SSL workflow...')
+            SSLChecker.run(force_email=ssl_email_option)
+            application.logger.info('<<<< Completed SSL Workflow >>>')
 
         else:
             application.logger.debug(f'No valid job_name passed: {job_name}. Exiting without running any tasks.')
@@ -102,7 +90,7 @@ if __name__ == "__main__":
     if not args:
         print(
             "ERROR: You must provide a target system, 'SCAN_VIRUS', 'EMAIL', "
-            "'CHECK_SSL', 'SSL_WEEKLY', or 'SSL_FOLLOWUP'."
+            "or 'CHECK_SSL'."
         )
         sys.exit(1)
 
@@ -125,12 +113,6 @@ if __name__ == "__main__":
             sys.exit(1)
         run("CHECK_SSL", ssl_email_option=ssl_email_option)
 
-    elif args[0] == "SSL_WEEKLY":
-        run("SSL_WEEKLY")
-
-    elif args[0] == "SSL_FOLLOWUP":
-        run("SSL_FOLLOWUP")
-
     else:
         # Assume EXTRACT_PROJECT with target_system
         from tasks.project_extractor import TargetSystem
@@ -141,6 +123,6 @@ if __name__ == "__main__":
             print(
                 f"ERROR: Invalid target system '{args[0]}'. "
                 f"Must be one of {[ts.value for ts in TargetSystem]} or "
-                "EMAIL/CHECK_SSL/SSL_WEEKLY/SSL_FOLLOWUP"
+                "EMAIL/CHECK_SSL"
             )
             sys.exit(1)
