@@ -105,20 +105,11 @@ class _Config():  # pylint: disable=too-few-public-methods
         f"postgresql://{CONDITION_DB_USER}:{CONDITION_DB_PASSWORD}@{CONDITION_DB_HOST}:{int(CONDITION_DB_PORT)}/{CONDITION_DB_NAME}"
     )
 
-    # Debug logging for detailed logs in Project Extractor
-    ENABLE_DETAILED_LOGS = os.getenv("ENABLE_DETAILED_LOGS", "false").lower() == "true"
-
-    TRACK_API_BASE_URL = os.getenv('TRACK_API_BASE_URL')
     CONDITION_API_BASE_URL = os.getenv("CONDITION_API_BASE_URL")
     KEYCLOAK_BASE_URL = os.getenv('KEYCLOAK_BASE_URL')
     KEYCLOAK_REALM_NAME = os.getenv('KEYCLOAK_REALM_NAME', 'eao-epic')
-    SERVICE_ACCOUNT_ID = os.getenv('SERVICE_ACCOUNT_ID', os.getenv('KEYCLOAK_SERVICE_ACCOUNT_ID'))
-    SERVICE_ACCOUNT_SECRET = os.getenv('SERVICE_ACCOUNT_SECRET', os.getenv('KEYCLOAK_SERVICE_ACCOUNT_SECRET'))
-    KEYCLOAK_SERVICE_ACCOUNT_ID = os.getenv('KEYCLOAK_SERVICE_ACCOUNT_ID', os.getenv('SERVICE_ACCOUNT_ID'))
-    KEYCLOAK_SERVICE_ACCOUNT_SECRET = os.getenv(
-        'KEYCLOAK_SERVICE_ACCOUNT_SECRET',
-        os.getenv('SERVICE_ACCOUNT_SECRET'),
-    )
+    SERVICE_ACCOUNT_ID = os.getenv('SERVICE_ACCOUNT_ID')
+    SERVICE_ACCOUNT_SECRET = os.getenv('SERVICE_ACCOUNT_SECRET')
     CONNECT_TIMEOUT = int(os.getenv('CONNECT_TIMEOUT', 60))
     # TODO separate out clients for APIs and user management.
     # TODO API client wont need user management roles in keycloak.
