@@ -147,8 +147,11 @@ class SSLChecker:
             # Create SSL context that doesn't verify certificates
             # We only want to read the expiry date, not validate the cert
             context = ssl.create_default_context()
+            # Restrict protocol versions to TLS 1.2 or higher
             if hasattr(ssl, "TLSVersion"):
                 context.minimum_version = ssl.TLSVersion.TLSv1_2
+                if hasattr(ssl.TLSVersion, "MAXIMUM_SUPPORTED"):
+                    context.maximum_version = ssl.TLSVersion.MAXIMUM_SUPPORTED
             else:
                 if hasattr(ssl, "OP_NO_TLSv1"):
                     context.options |= ssl.OP_NO_TLSv1
