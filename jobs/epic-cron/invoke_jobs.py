@@ -91,9 +91,14 @@ def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
                 application.logger.info(f'<<<< Completed Proponent Status Update >>>>')
 
         elif job_name == 'SCAN_VIRUS':
-            application.logger.info(f'Running Virus Scanner on: {file_path}')
-            VirusScanner.scan_file_from_path(file_path)
-            application.logger.info(f'Completed Virus Scan for {file_path}')
+            if file_path:
+                application.logger.info(f'Running Virus Scanner on: {file_path}')
+                VirusScanner.scan_file_from_path(file_path)
+                application.logger.info(f'Completed Virus Scan for {file_path}')
+            else:
+                application.logger.info('Running Virus Scanner for recent EPIC.submit uploads')
+                result = VirusScanner.scan_submit_uploads()
+                application.logger.info(f'Completed submit virus scan: {result}')
 
         elif job_name == 'EMAIL':
             application.logger.info(f'Starting Email Sending At {datetime.now()}')
@@ -166,10 +171,7 @@ if __name__ == "__main__":
         run("CHECK_SSL", ssl_email_option=ssl_email_option)
 
     elif job_type == "SCAN_VIRUS":
-        if len(args) < 2:
-            logger.error("You must provide a file path for SCAN_VIRUS.")
-            sys.exit(1)
-        file_path = args[1]
+        file_path = args[1] if len(args) > 1 else None
         run("SCAN_VIRUS", target_system=None, file_path=file_path)
 
     else:

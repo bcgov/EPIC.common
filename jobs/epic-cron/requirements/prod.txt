@@ -18,6 +18,8 @@ itsdangerous
 werkzeug
 sqlalchemy-utils
 Flask-Caching
+boto3
+botocore
 sqlalchemy
 secure
 python-dotenv

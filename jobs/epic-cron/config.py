@@ -116,6 +116,15 @@ class _Config():  # pylint: disable=too-few-public-methods
 
     CLAMAV_HOST = os.getenv('CLAMAV_HOST')
     CLAMAV_PORT = os.getenv('CLAMAV_PORT')
+    S3_BUCKET = os.getenv("S3_BUCKET", os.getenv("S3_BUCKET_NAME", ""))
+    S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID", "")
+    S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY", "")
+    S3_REGION = os.getenv("S3_REGION", "")
+    S3_HOST = os.getenv("S3_HOST", os.getenv("S3_ENDPOINT_URI", ""))
+    S3_SERVICE = os.getenv("S3_SERVICE", "")
+    VIRUS_SCAN_LOOKBACK_HOURS = int(os.getenv("VIRUS_SCAN_LOOKBACK_HOURS", "24"))
+    VIRUS_SCAN_ACTION = os.getenv("VIRUS_SCAN_ACTION", "REJECT")
+    VIRUS_SCAN_QUARANTINE_PREFIX = os.getenv("VIRUS_SCAN_QUARANTINE_PREFIX", "quarantine/virus")
 
     # CHES Configuration for Email Service
     CHES_TOKEN_ENDPOINT = os.getenv('CHES_TOKEN_ENDPOINT')
