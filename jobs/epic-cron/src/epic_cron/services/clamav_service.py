@@ -1,4 +1,3 @@
-# clamav_service.py
 import clamd
 import io
 from flask import current_app
@@ -17,12 +16,11 @@ class ClamAVService:
         """Scan a byte stream and return result."""
         try:
             result = self.cd.instream(io.BytesIO(data))
-            status, message = result.get('stream', ('ERROR', 'Unknown'))
-            if status == 'FOUND':
-                return True, message  # Virus found
-            elif status == 'OK':
-                return False, None    # Clean
-            else:
-                return None, f"Unexpected response: {result}"
-        except Exception as e:
-            return None, str(e)
+            status, message = result.get("stream", ("ERROR", "Unknown"))
+            if status == "FOUND":
+                return True, message
+            if status == "OK":
+                return False, None
+            return None, f"Unexpected response: {result}"
+        except Exception as exc:
+            return None, str(exc)
