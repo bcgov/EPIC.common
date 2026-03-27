@@ -28,6 +28,7 @@ class VirusScanAction:
 
 VIRUS_ACTIVITY_ACTION = "Virus detected during overnight scan"
 VIRUS_ACTIVITY_ACTOR = "epic.common-virus-scan"
+QUARANTINE_FILE_PREFIX = ".virus-quarantine"
 
 
 @dataclass
@@ -65,9 +66,14 @@ class SubmitVirusScanService:
             action,
         )
 
-        clamav_service = ClamAVService()
-        s3_service = S3Service()
         result = SubmitVirusScanResult()
+        try:
+            clamav_service = ClamAVService()
+            s3_service = S3Service()
+        except Exception as exc:  # pylint: disable=broad-except
+            current_app.logger.exception("Unable to initialize virus scan services. Skipping scan. error=%s", exc)
+            result.failed += 1
+            return result
 
         submissions = cls._find_recent_document_submissions(since=since)
         current_app.logger.info("Found %s submit documents to scan.", len(submissions))
@@ -172,55 +178,175 @@ class SubmitVirusScanService:
         )
 
         if action == VirusScanAction.REPORT_ONLY:
+            current_app.logger.warning(
+                "Virus detected but configured for report-only. submission_id=%s key=%s",
+                submission.id,
+                object_key,
+            )
             return
 
-        submission.status = SubmissionStatus.REJECTED
-        db.session.add(submission)
+        if action == VirusScanAction.QUARANTINE:
+            cls._quarantine_submission(
+                submission=submission,
+                object_key=object_key,
+                detection_details=detection_details,
+                s3_service=s3_service,
+            )
+            result.rejected += 1
+            result.quarantined += 1
+        elif action == VirusScanAction.DELETE:
+            cls._delete_submission_file(
+                submission=submission,
+                object_key=object_key,
+                detection_details=detection_details,
+                s3_service=s3_service,
+            )
+            result.rejected += 1
+            result.deleted += 1
+        else:
+            cls._reject_submission(
+                submission=submission,
+                activity_message=(
+                    f"{VIRUS_ACTIVITY_ACTION}. Detection: {detection_details}. "
+                    "Action taken: rejected this upload."
+                ),
+            )
+            db.session.commit()
+            result.rejected += 1
+
+    @staticmethod
+    def _build_quarantine_key(object_key: str) -> str:
+        """Build a quarantine object key in the same folder with a renamed file."""
+        folder, separator, filename = object_key.rpartition("/")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        quarantined_name = f"{QUARANTINE_FILE_PREFIX}-{timestamp}-{filename}"
+        if not separator:
+            return quarantined_name
+        return f"{folder}/{quarantined_name}"
+
+    @staticmethod
+    def _log_activity(submission: SubmissionModel, message: str):
+        """Write a staff-only activity log entry for the submission."""
         ActivityLogService.log_activity(
             session=db.session,
             entity_id=submission.id,
             entity_type=ActivityTypeEnum.SUBMISSION.value,
             entity_version=submission.minor_version or 1,
-            action=f"{VIRUS_ACTIVITY_ACTION}: {detection_details}",
+            action=message,
             actor_id=VIRUS_ACTIVITY_ACTOR,
             actor_type=ActorTypeEnum.STAFF.value,
             visibility=VisibilityTypeEnum.STAFF.value,
         )
-        result.rejected += 1
 
-        if action == VirusScanAction.QUARANTINE:
-            quarantine_key = cls._build_quarantine_key(object_key)
-            s3_service.copy_object(object_key, quarantine_key)
+    @classmethod
+    def _reject_submission(cls, submission: SubmissionModel, activity_message: str):
+        """Mark the individual document submission as rejected and log why."""
+        submission.status = SubmissionStatus.REJECTED
+        db.session.add(submission)
+        cls._log_activity(submission=submission, message=activity_message)
+
+    @classmethod
+    def _quarantine_submission(
+        cls,
+        submission: SubmissionModel,
+        object_key: str,
+        detection_details: str,
+        s3_service: S3Service,
+    ):
+        """Rename the infected file in place and reject the upload if all steps succeed."""
+        quarantine_key = cls._build_quarantine_key(object_key)
+        s3_service.copy_object(object_key, quarantine_key)
+
+        try:
             s3_service.delete_object(object_key)
-            result.quarantined += 1
+        except Exception:
+            cls._safe_delete_key(s3_service, quarantine_key)
+            raise
+
+        try:
+            cls._reject_submission(
+                submission=submission,
+                activity_message=(
+                    f"{VIRUS_ACTIVITY_ACTION}. Detection: {detection_details}. "
+                    f"Action taken: quarantined infected file as {quarantine_key} and rejected this upload."
+                ),
+            )
+            db.session.commit()
             current_app.logger.warning(
-                "Infected file moved to quarantine. submission_id=%s source_key=%s quarantine_key=%s",
+                "Infected file quarantined. submission_id=%s source_key=%s quarantine_key=%s",
                 submission.id,
                 object_key,
                 quarantine_key,
             )
-        elif action == VirusScanAction.DELETE:
+        except Exception:
+            db.session.rollback()
+            cls._restore_original_key(s3_service, quarantine_key, object_key)
+            raise
+
+    @classmethod
+    def _delete_submission_file(
+        cls,
+        submission: SubmissionModel,
+        object_key: str,
+        detection_details: str,
+        s3_service: S3Service,
+    ):
+        """Delete the infected file only if we can restore it on a later failure."""
+        backup_key = cls._build_quarantine_key(object_key)
+        s3_service.copy_object(object_key, backup_key)
+
+        try:
             s3_service.delete_object(object_key)
-            result.deleted += 1
+        except Exception:
+            cls._safe_delete_key(s3_service, backup_key)
+            raise
+
+        try:
+            cls._reject_submission(
+                submission=submission,
+                activity_message=(
+                    f"{VIRUS_ACTIVITY_ACTION}. Detection: {detection_details}. "
+                    "Action taken: deleted infected file from S3 and rejected this upload."
+                ),
+            )
+            db.session.commit()
+            cls._safe_delete_key(s3_service, backup_key)
             current_app.logger.warning(
-                "Infected file deleted from S3. submission_id=%s key=%s",
+                "Infected file deleted. submission_id=%s key=%s",
                 submission.id,
                 object_key,
             )
-
-        db.session.commit()
+        except Exception:
+            db.session.rollback()
+            cls._restore_original_key(s3_service, backup_key, object_key)
+            raise
 
     @staticmethod
-    def _build_quarantine_key(object_key: str) -> str:
-        """Build the quarantine object key while preserving the original path."""
-        quarantine_prefix = current_app.config.get("VIRUS_SCAN_QUARANTINE_PREFIX", "quarantine/virus")
-        quarantine_prefix = quarantine_prefix.strip().strip("/")
-        return f"{quarantine_prefix}/{object_key.lstrip('/')}"
+    def _safe_delete_key(s3_service: S3Service, object_key: str):
+        """Best-effort delete for cleanup paths."""
+        try:
+            s3_service.delete_object(object_key)
+        except Exception as exc:  # pylint: disable=broad-except
+            current_app.logger.warning("Cleanup delete failed for key=%s error=%s", object_key, exc)
+
+    @staticmethod
+    def _restore_original_key(s3_service: S3Service, source_key: str, destination_key: str):
+        """Best-effort restore so submit is not affected by a later failure."""
+        try:
+            s3_service.copy_object(source_key, destination_key)
+            s3_service.delete_object(source_key)
+        except Exception as exc:  # pylint: disable=broad-except
+            current_app.logger.exception(
+                "Failed to restore original S3 key after virus scan error. source_key=%s destination_key=%s error=%s",
+                source_key,
+                destination_key,
+                exc,
+            )
 
     @staticmethod
     def _get_action() -> str:
         """Return a validated virus scan action."""
-        configured_action = (current_app.config.get("VIRUS_SCAN_ACTION") or VirusScanAction.REJECT).upper()
+        configured_action = (current_app.config.get("VIRUS_SCAN_ACTION") or VirusScanAction.QUARANTINE).upper()
         allowed_actions = {
             VirusScanAction.REPORT_ONLY,
             VirusScanAction.REJECT,

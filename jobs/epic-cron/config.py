@@ -125,8 +125,7 @@ class _Config():  # pylint: disable=too-few-public-methods
     S3_HOST = os.getenv("S3_HOST", "")
     S3_SERVICE = os.getenv("S3_SERVICE", "")
     VIRUS_SCAN_LOOKBACK_HOURS = int(os.getenv("VIRUS_SCAN_LOOKBACK_HOURS", "24"))
-    VIRUS_SCAN_ACTION = os.getenv("VIRUS_SCAN_ACTION", "REJECT")
-    VIRUS_SCAN_QUARANTINE_PREFIX = os.getenv("VIRUS_SCAN_QUARANTINE_PREFIX", "quarantine/virus")
+    VIRUS_SCAN_ACTION = os.getenv("VIRUS_SCAN_ACTION", "QUARANTINE")
 
 class DevConfig(_Config):  # pylint: disable=too-few-public-methods
     """Dev Config."""
