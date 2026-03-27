@@ -45,9 +45,14 @@ def run(job_name, target_system=None, file_path=None):
             application.logger.info(f'<<<< Completed Project Sync for {target_system.value} >>>')
 
         elif job_name == 'SCAN_VIRUS':
-            print(f'Running Virus Scanner on: {file_path}')
-            VirusScanner.scan_file_from_path(file_path)
-            application.logger.info(f'<<<< Completed Virus Scan for {file_path} >>>')
+            if file_path:
+                print(f'Running Virus Scanner on: {file_path}')
+                VirusScanner.scan_file_from_path(file_path)
+                application.logger.info(f'<<<< Completed Virus Scan for {file_path} >>>')
+            else:
+                print('Running Virus Scanner for recent EPIC.submit uploads')
+                result = VirusScanner.scan_submit_uploads()
+                application.logger.info(f'<<<< Completed Submit Virus Scan: {result} >>>')
 
         else:
             application.logger.debug('No valid job_name passed. Exiting without running any tasks.')
@@ -63,10 +68,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if args[0] == "SCAN_VIRUS":
-        if len(args) < 2:
-            print("ERROR: You must provide a file path for SCAN_VIRUS.")
-            sys.exit(1)
-        file_path = args[1]
+        file_path = args[1] if len(args) > 1 else None
         run("SCAN_VIRUS", target_system=None, file_path=file_path)
 
     else:
@@ -77,4 +79,3 @@ if __name__ == "__main__":
         except ValueError:
             print(f"ERROR: Invalid target system '{args[0]}'. Must be one of {[ts.value for ts in TargetSystem]}")
             sys.exit(1)
-
