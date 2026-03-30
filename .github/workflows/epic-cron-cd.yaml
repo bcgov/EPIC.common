@@ -1,6 +1,5 @@
 name: EPIC CRON CD
 
-
 on:
   push:
     branches:
@@ -21,15 +20,16 @@ defaults:
 
 env:
   APP_NAME: "epic-cron"
-  TAG_NAME: "dev"
 
 jobs:
-  met-cron-cd:
+  epic-cron-cd:
     runs-on: ubuntu-22.04
 
     if: github.repository == 'bcgov/EPIC.common'
     environment:
-      name: "dev"
+      name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
+    env:
+      TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev' }}
 
     steps:
       - uses: actions/checkout@v2
@@ -59,4 +59,4 @@ jobs:
       - name: Rollout
         shell: bash
         run: |
-          oc rollout status dc/${{ env.APP_NAME }} -n ${{ secrets.OPENSHIFT_REPOSITORY }}-${{ env.TAG_NAME }} -w
+          oc rollout restart deployment/${{ env.APP_NAME }} -n ${{ secrets.OPENSHIFT_REPOSITORY }}-${{ env.TAG_NAME }}
