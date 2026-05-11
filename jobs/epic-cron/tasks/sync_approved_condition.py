@@ -26,7 +26,7 @@ class SyncApprovedCondition:  # pylint:disable=too-few-public-methods
     @classmethod
     def sync_approved_condition(cls):
         """Update projects having approved condition."""
-        init_submit_db(current_app)
+        session_factory = init_submit_db(current_app)
         ma.init_app(current_app)
         current_app.logger.info('Starting Approved Condition Sync---{}'.format(datetime.now()))
-        ApprovedConditionService.sync_projects_with_approved_conditions()
+        ApprovedConditionService.sync_projects_with_approved_conditions(session_factory)

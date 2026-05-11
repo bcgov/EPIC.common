@@ -2,8 +2,8 @@ from flask import current_app
 
 from epic_cron.data_classes.email_details import EmailDetails
 from epic_cron.exceptions import BadRequestError
-from epic_cron.repositories.submit_repository import PackageEmailData
-from epic_cron.utils import constants
+from epic_cron.data_classes.submit_email import PackageEmailData
+from epic_cron.utils import submit_constants
 
 
 class ResubmissionEmailService:
@@ -25,7 +25,7 @@ class ResubmissionEmailService:
             f"/submission-packages/{package.package_id}"
         )
         return EmailDetails(
-            template_name=constants.MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE,
+            template_name=submit_constants.MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE,
             body_args={
                 'submission_link': submission_link,
                 'package_name': package.package_name,

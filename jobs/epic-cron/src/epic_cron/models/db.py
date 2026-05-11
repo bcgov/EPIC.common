@@ -5,7 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# DB initialize - Flask-SQLAlchemy for submit services
+# Kept for older shell-context integrations that still import epic_cron.models.db.
+# Cron database access should use explicit session factories instead.
 db = SQLAlchemy()
 
 # Marshmallow for database model schema
@@ -49,11 +50,9 @@ def init_condition_db(app):
 
 
 def init_submit_db(app):
-    """Return the Flask-SQLAlchemy db instance for the Submit database."""
+    """Initialize the session for the Submit database."""
     print("Initializing Submit database...")
-    # db is already initialized as a global singleton
-    # Just return it for use within the app context
-    return db
+    return create_session(app.config['SUBMIT_DATABASE_URI'])
 
 
 # Aliases for backward compatibility

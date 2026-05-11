@@ -5,10 +5,22 @@ They keep epic-cron independent from Submit's Flask app, dependency pins, and
 model graph.
 """
 
-from sqlalchemy import Boolean, Column, Integer, String
+import enum
+
+from sqlalchemy import Boolean, Column, Enum as SqlEnum, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
+
+class SubmitProponentStatus(str, enum.Enum):
+    """Known Submit proponent status values."""
+
+    ELIGIBLE = "ELIGIBLE"
+    INELIGIBLE = "INELIGIBLE"
+    INVITE_GENERATED = "INVITE_GENERATED"
+    PENDING_ONBOARDING = "PENDING_ONBOARDING"
+    ONBOARDED = "ONBOARDED"
 
 
 class SubmitProject(Base):
@@ -31,5 +43,12 @@ class SubmitProponent(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=False)
     name = Column(String, nullable=False)
-    status = Column(String(50), nullable=True)
+    status = Column(
+        SqlEnum(
+            SubmitProponentStatus,
+            name="proponentstatus",
+            values_callable=lambda statuses: [status.value for status in statuses],
+        ),
+        nullable=True,
+    )
     is_deleted = Column(Boolean, nullable=False, default=False)

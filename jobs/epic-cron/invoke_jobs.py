@@ -30,16 +30,11 @@ logger = logging.getLogger(__name__)
 
 def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
     """Return a configured Flask App using the Factory method."""
-    from epic_cron.models.db import db  # Import db for Flask-SQLAlchemy
-
     app = Flask(__name__)
     logger.info(f'Creating app in run_mode: {run_mode}')
 
     # Load configuration based on the run mode
     app.config.from_object(config.get_named_config(run_mode))
-
-    # Initialize Flask-SQLAlchemy with the app
-    db.init_app(app)
 
     register_shellcontext(app)
 

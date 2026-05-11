@@ -2,8 +2,8 @@ from flask import current_app
 
 from epic_cron.data_classes.email_details import EmailDetails
 from epic_cron.exceptions import BadRequestError
-from epic_cron.repositories.submit_repository import PackageEmailData
-from epic_cron.utils import constants
+from epic_cron.data_classes.submit_email import PackageEmailData
+from epic_cron.utils import submit_constants
 from epic_cron.utils.datetime import convert_utc_to_local_str
 
 
@@ -23,8 +23,8 @@ class PackageSubmissionEmailService:  # pylint: disable=too-few-public-methods
         if not sender_email:
             raise BadRequestError(f"Sender email not found for package type: {package.package_type}")
 
-        email_template_name = template_name or constants.MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE
-        if email_template_name == constants.MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE:
+        email_template_name = template_name or submit_constants.MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE
+        if email_template_name == submit_constants.MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE:
             staff_email = current_app.config.get('STAFF_SUPPORT_MAIL_ID')
             if not staff_email:
                 raise BadRequestError("STAFF_SUPPORT_MAIL_ID is not configured")
@@ -73,7 +73,7 @@ class PackageSubmissionEmailService:  # pylint: disable=too-few-public-methods
             raise BadRequestError(f"Sender email not found for package type: {package.package_type}")
 
         return EmailDetails(
-            template_name=constants.SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE,
+            template_name=submit_constants.SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE,
             body_args={
                 'package_name': package.package_name,
                 'project_name': package.project_name,
@@ -87,7 +87,7 @@ class PackageSubmissionEmailService:  # pylint: disable=too-few-public-methods
     @staticmethod
     def get_email_sender_for_package_type(package_type: str) -> str:
         """Get the email sender for the package type."""
-        return constants.SUBMISSION_PACKAGE_TYPE_EMAIL_SENDER_MAP.get(package_type, None)
+        return submit_constants.SUBMISSION_PACKAGE_TYPE_EMAIL_SENDER_MAP.get(package_type, None)
 
     @staticmethod
     def _require_submitter(package: PackageEmailData):
