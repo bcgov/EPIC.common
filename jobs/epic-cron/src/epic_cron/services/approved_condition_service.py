@@ -1,6 +1,6 @@
 import requests
 from flask import current_app
-from submit_api.models.project import Project as SubmitProjectModel
+from epic_cron.models.external.submit import SubmitProject as SubmitProjectModel
 
 class ApprovedConditionService:
     """Service to interact with the Condition API."""

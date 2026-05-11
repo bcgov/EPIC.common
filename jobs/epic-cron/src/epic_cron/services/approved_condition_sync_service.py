@@ -1,7 +1,7 @@
 import requests
 from flask import current_app
-from submit_api.models.project import Project
 
+from epic_cron.models.external.submit import SubmitProject
 from epic_cron.models import db
 
 
@@ -44,7 +44,7 @@ class ApprovedConditionService:
 
             for epic_guid in epic_guids:
                 # Fetch the Project by epic_guid
-                project = db.session.query(Project).filter_by(epic_guid=epic_guid).first()
+                project = db.session.query(SubmitProject).filter_by(epic_guid=epic_guid).first()
                 if project:
                     if not project.has_approved_condition:
                         project.has_approved_condition = True

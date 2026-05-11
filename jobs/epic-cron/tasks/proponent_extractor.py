@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import current_app
-from submit_api.models.proponent import Proponent as SubmitProponentModel
+from epic_cron.models.external.submit import SubmitProponent as SubmitProponentModel
 from epic_cron.models.db import init_submit_db
 from epic_cron.services.track_service import TrackService
 

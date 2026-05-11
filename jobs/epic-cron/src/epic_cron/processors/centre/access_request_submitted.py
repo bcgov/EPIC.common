@@ -1,8 +1,7 @@
 from typing import Any, Dict, List
 
 from epic_cron.data_classes.email_details import EmailDetails
-from submit_api.exceptions import BadRequestError
-
+from epic_cron.exceptions import BadRequestError
 from epic_cron.models.email_job import EmailJob
 
 

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Keycloak admin functions – same pattern as submit-api KeycloakService."""
+"""Keycloak admin functions for cron jobs."""
 from typing import Optional
 from urllib.parse import quote
 
@@ -19,12 +19,12 @@ import requests
 from flask import current_app
 
 
-# Same group path as submit-api (SUBMIT / EAO_MANAGER)
+# Same Submit group path used by the application.
 EAO_MANAGER_GROUP_PATH = "SUBMIT/EAO_MANAGER"
 
 
 class KeycloakService:
-    """Keycloak admin API – same token and request pattern as submit-api."""
+    """Keycloak admin API helper."""
 
     @staticmethod
     def _get_admin_token():
@@ -60,7 +60,7 @@ class KeycloakService:
 
     @staticmethod
     def _request_keycloak(relative_url: str):
-        """GET request to Keycloak admin API (same URL pattern as submit-api)."""
+        """GET request to Keycloak admin API."""
         base_url = current_app.config.get("KEYCLOAK_BASE_URL")
         realm = current_app.config.get("KEYCLOAK_REALM_NAME")
         timeout = int(current_app.config.get("CONNECT_TIMEOUT", 60))
@@ -187,7 +187,7 @@ class KeycloakService:
 
     @classmethod
     def get_eao_manager_emails(cls) -> list:
-        """Return email addresses of SUBMIT/EAO_MANAGER group members (same as submit-api flow)."""
+        """Return email addresses of SUBMIT/EAO_MANAGER group members."""
         try:
             group_id = cls.get_group_id_by_path(EAO_MANAGER_GROUP_PATH)
             members = cls.get_members_for_group(group_id)

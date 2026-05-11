@@ -20,13 +20,13 @@ Business Logic:
 from flask import current_app
 from sqlalchemy import and_, or_
 
-from submit_api.models.proponent import Proponent as SubmitProponentModel
-from submit_api.models.project import Project as SubmitProjectModel
-from submit_api.enums.proponent_status import ProponentStatus
 from epic_cron.services.approved_condition_service import ApprovedConditionService
+from epic_cron.models.external.submit import SubmitProject as SubmitProjectModel
+from epic_cron.models.external.submit import SubmitProponent as SubmitProponentModel
 from epic_cron.models.external.track_work import TrackWork
 from epic_cron.models.external.track_phase import TrackPhase
 from epic_cron.models.external.work_state import WorkState
+from epic_cron.utils import constants
 
 
 class ProponentStatusUpdater:
@@ -44,14 +44,22 @@ class ProponentStatusUpdater:
                 
                 # Update proponents to ELIGIBLE status
                 if eligible_proponent_ids:
-                    cls._update_proponent_status(session, eligible_proponent_ids, ProponentStatus.ELIGIBLE)
+                    cls._update_proponent_status(
+                        session,
+                        eligible_proponent_ids,
+                        constants.PROPONENT_STATUS_ELIGIBLE,
+                    )
                 else:
                     current_app.logger.info("No eligible proponents found.")
                 
                 # Find and update proponents who should be INELIGIBLE
                 ineligible_proponent_ids = cls._find_ineligible_proponents(session, eligible_proponent_ids)
                 if ineligible_proponent_ids:
-                    cls._update_proponent_status(session, ineligible_proponent_ids, ProponentStatus.INELIGIBLE)
+                    cls._update_proponent_status(
+                        session,
+                        ineligible_proponent_ids,
+                        constants.PROPONENT_STATUS_INELIGIBLE,
+                    )
                 else:
                     current_app.logger.info("No ineligible proponents found.")
                 
@@ -189,7 +197,7 @@ class ProponentStatusUpdater:
         Args:
             session: Database session
             proponent_ids: Set or list of proponent IDs to update
-            status: ProponentStatus enum value to set
+            status: Proponent status string to set.
         """
         if not proponent_ids:
             return
@@ -199,7 +207,7 @@ class ProponentStatusUpdater:
                 SubmitProponentModel.id.in_(proponent_ids),
                 or_(
                     SubmitProponentModel.status.is_(None),
-                    SubmitProponentModel.status == ProponentStatus.INELIGIBLE
+                    SubmitProponentModel.status == constants.PROPONENT_STATUS_INELIGIBLE
                 )
             )
         ).all()
@@ -212,6 +220,6 @@ class ProponentStatusUpdater:
         
         session.commit()
         current_app.logger.info(
-            f"Updated {updated_count} proponents to {status.value} status "
+            f"Updated {updated_count} proponents to {status} status "
             f"(out of {len(proponent_ids)} eligible)"
         )

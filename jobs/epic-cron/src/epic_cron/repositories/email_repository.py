@@ -9,7 +9,7 @@ from epic_cron.models.email_job import EmailJob
 
 metadata = MetaData()
 
-# Local definition of the table (decoupled from submit_api.models)
+# Local definition of the Centre email queue table.
 email_queue_table = Table(
     "email_queue",
     metadata,

@@ -3,8 +3,8 @@ from enum import Enum
 
 from epic_cron.models.external.compliance_project import Project as ComplianceProjectModel
 from epic_cron.models.external.condition_project import Project as ConditionProjectModel
+from epic_cron.models.external.submit import SubmitProject as SubmitProjectModel
 from flask import current_app
-from submit_api.models.project import Project as SubmitProjectModel
 
 from epic_cron.models.db import init_db, init_submit_db, init_compliance_db, \
     init_conditions_db  # Function that initializes DB engines
