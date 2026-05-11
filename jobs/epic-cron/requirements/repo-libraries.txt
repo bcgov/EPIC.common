@@ -1,2 +1,1 @@
-# Keep this file for compatibility with older setup scripts.
-# epic-cron intentionally does not install sibling application packages.
+-e git+https://github.com/bcgov/EPIC.submit.git@develop#egg=submit-api&subdirectory=submit-api

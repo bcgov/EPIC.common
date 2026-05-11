@@ -16,9 +16,9 @@ from datetime import datetime
 
 from flask import current_app
 
-from epic_cron.models.db import init_centre_db
-from epic_cron.repositories.access_request_repository import AccessRequestRepository
-from epic_cron.services.pending_access_reminder_service import run_pending_access_reminder
+from submit_cron.models.db import init_centre_db
+from submit_cron.repositories.access_request_repository import AccessRequestRepository
+from submit_cron.services.pending_access_reminder_service import run_pending_access_reminder
 
 
 class PendingAccessReminder:

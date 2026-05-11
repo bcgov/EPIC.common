@@ -3,7 +3,7 @@ from enum import Enum
 
 from flask import current_app
 
-from epic_cron.models.db import init_submit_db, init_compliance_db, init_conditions_db
+from epic_cron.models.db import init_submit_session, init_compliance_db, init_conditions_db
 from epic_cron.models.external.compliance_project import Project as ComplianceProjectModel
 from epic_cron.models.external.condition_project import Project as ConditionProjectModel
 from epic_cron.models.external.submit import SubmitProject as SubmitProjectModel
@@ -40,7 +40,7 @@ class ProjectExtractor:
     def _get_target_config(target_system):
         """Return the session factory and model for the target system."""
         if target_system == TargetSystem.SUBMIT:
-            return init_submit_db(current_app), SubmitProjectModel
+            return init_submit_session(current_app), SubmitProjectModel
         if target_system == TargetSystem.CONDITIONS:
             return init_conditions_db(current_app), ConditionProjectModel
         return init_compliance_db(current_app), ComplianceProjectModel

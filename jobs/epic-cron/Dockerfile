@@ -1,5 +1,8 @@
 FROM python:3.12-slim-bookworm
 
+# Install git for pip to clone git dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+
 # ========================================================================================================
 # Install go-crond (from https://github.com/BCDevOps/go-crond)
 #  - Adds some additional logging enhancements on top of the upstream project;
@@ -40,10 +43,15 @@ WORKDIR $HOME
 COPY ./requirements.txt .
 COPY ./requirements/ ./requirements/
 
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+# The editable repo libraries currently have incompatible transitive pins. Install
+# the cron image dependency set first, then install the repo libraries themselves
+# without re-resolving their install_requires.
+RUN sed '/^-e git+/d' requirements.txt > /tmp/requirements-no-repos.txt \
+    && pip install --no-cache-dir -r /tmp/requirements-no-repos.txt \
+    && pip install --no-cache-dir --no-deps -r requirements/repo-libraries.txt
 
-# Copy the rest of the application after pip install for better layer caching.
+# Copy the rest of the application after pip install to avoid conflicts with git dependencies
 COPY . .
 
 RUN pip install .

@@ -30,11 +30,16 @@ logger = logging.getLogger(__name__)
 
 def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
     """Return a configured Flask App using the Factory method."""
+    from epic_cron.models.db import db
+
     app = Flask(__name__)
     logger.info(f'Creating app in run_mode: {run_mode}')
 
     # Load configuration based on the run mode
     app.config.from_object(config.get_named_config(run_mode))
+
+    # Initialize Flask-SQLAlchemy for the Submit mailer.
+    db.init_app(app)
 
     register_shellcontext(app)
 
@@ -81,9 +86,9 @@ def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
 
             # Update proponent eligibility status after project sync (SUBMIT only)
             if target_system == TargetSystem.SUBMIT:
-                from epic_cron.models.db import init_submit_db
+                from epic_cron.models.db import init_submit_session
                 application.logger.info('Running Proponent Status Updater...')
-                ProponentStatusUpdater.update(init_submit_db(application))
+                ProponentStatusUpdater.update(init_submit_session(application))
                 application.logger.info(f'<<<< Completed Proponent Status Update >>>>')
 
         elif job_name == 'SCAN_VIRUS':

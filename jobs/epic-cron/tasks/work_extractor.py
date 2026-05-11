@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
-from epic_cron.models.db import init_submit_db
+from epic_cron.models.db import init_submit_session
 from epic_cron.models.external.track_work import TrackWork as TrackWorkModel
 from epic_cron.services.track_service import TrackService
 
@@ -16,7 +16,7 @@ class WorkExtractor:
         """Fetch Track work data and upsert it into Submit."""
         current_app.logger.info(f"Starting Work Extractor at {datetime.now()}")
         current_app.logger.info("Initializing Submit database session...")
-        session_factory = init_submit_db(current_app)
+        session_factory = init_submit_session(current_app)
 
         current_app.logger.info("Fetching work data from Track API...")
         track_works = TrackService.fetch_track_works()

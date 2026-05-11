@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import current_app
 from epic_cron.models.external.submit import SubmitProponent as SubmitProponentModel
-from epic_cron.models.db import init_submit_db
+from epic_cron.models.db import init_submit_session
 from epic_cron.services.track_service import TrackService
 
 
@@ -15,7 +15,7 @@ class ProponentExtractor:
 
         # Initialize target database session
         print("Initializing database sessions...")
-        session_factory = init_submit_db(current_app)
+        session_factory = init_submit_session(current_app)
 
         proponents_data = TrackService.fetch_proponents()
         cls._sync_proponents(proponents_data, session_factory, SubmitProponentModel)

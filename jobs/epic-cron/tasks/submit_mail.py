@@ -26,7 +26,7 @@ class SubmitMailer:  # pylint:disable=too-few-public-methods
     @classmethod
     def send_mail(cls):
         """Publish the scheduled engagements."""
-        session_factory = init_submit_db(current_app)
+        init_submit_db(current_app)
         ma.init_app(current_app)
         current_app.logger.info('Starting Email At---{}'.format(datetime.now()))
-        EmailService.process_email_queue(session_factory)
+        EmailService.process_email_queue()

@@ -11,8 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Application-wide constants.
+"""This module contains constants used in the application."""
 
-Keep integration-specific values in their own modules so this file stays small
-and does not become a dumping ground.
-"""
+SUBMISSION_PACKAGE_TYPE_EMAIL_SENDER_MAP = {
+    'Management Plan': 'EAO.ManagementPlanSupport@gov.bc.ca',
+    'IEM': 'EAO.ManagementPlanSupport@gov.bc.ca'
+}
+
+SUBMISSION_PACKAGE_TYPE_SENDER_MAP = {
+    'Management Plan': 'The Management Plan Team at the Environmental Assessment Office',
+    'IEM': 'EAO.ManagementPlanSupport@gov.bc.ca'
+}
+
+PACKAGE_ENTITY_TYPE = 'PACKAGE'
+INVITATION_ENTITY_TYPE = 'INVITATION'
