@@ -86,9 +86,9 @@ def run(job_name, target_system=None, file_path=None, ssl_email_option=None):
 
             # Update proponent eligibility status after project sync (SUBMIT only)
             if target_system == TargetSystem.SUBMIT:
-                from epic_cron.models.db import init_submit_db
+                from epic_cron.models.db import init_submit_session
                 application.logger.info('Running Proponent Status Updater...')
-                ProponentStatusUpdater.update(init_submit_db(application))
+                ProponentStatusUpdater.update(init_submit_session(application))
                 application.logger.info(f'<<<< Completed Proponent Status Update >>>>')
 
         elif job_name == 'SCAN_VIRUS':

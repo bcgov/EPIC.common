@@ -20,38 +20,39 @@ Business Logic:
 from flask import current_app
 from sqlalchemy import and_, or_
 
-from submit_api.models.proponent import Proponent as SubmitProponentModel
-from submit_api.models.project import Project as SubmitProjectModel
-from submit_api.enums.proponent_status import ProponentStatus
+from epic_cron.models.external.submit import SubmitProject, SubmitProponent
 from epic_cron.services.approved_condition_service import ApprovedConditionService
 from epic_cron.models.external.track_work import TrackWork
 from epic_cron.models.external.track_phase import TrackPhase
 from epic_cron.models.external.work_state import WorkState
+
+STATUS_ELIGIBLE = "ELIGIBLE"
+STATUS_INELIGIBLE = "INELIGIBLE"
 
 
 class ProponentStatusUpdater:
     """Updates proponent eligibility status based on approved conditions and valid works."""
 
     @classmethod
-    def update(cls, db, _=None):
+    def update(cls, session_factory, _=None):
         """Main entry point for updating proponent eligibility status."""
         current_app.logger.info("Running ProponentStatusUpdater...")
         
         try:
-            with db.session() as session:
+            with session_factory() as session:
                 # Find all proponents who should be ELIGIBLE
                 eligible_proponent_ids = cls._find_eligible_proponents(session)
                 
                 # Update proponents to ELIGIBLE status
                 if eligible_proponent_ids:
-                    cls._update_proponent_status(session, eligible_proponent_ids, ProponentStatus.ELIGIBLE)
+                    cls._update_proponent_status(session, eligible_proponent_ids, STATUS_ELIGIBLE)
                 else:
                     current_app.logger.info("No eligible proponents found.")
                 
                 # Find and update proponents who should be INELIGIBLE
                 ineligible_proponent_ids = cls._find_ineligible_proponents(session, eligible_proponent_ids)
                 if ineligible_proponent_ids:
-                    cls._update_proponent_status(session, ineligible_proponent_ids, ProponentStatus.INELIGIBLE)
+                    cls._update_proponent_status(session, ineligible_proponent_ids, STATUS_INELIGIBLE)
                 else:
                     current_app.logger.info("No ineligible proponents found.")
                 
@@ -105,8 +106,8 @@ class ProponentStatusUpdater:
             return set(proponent_ids_from_sync)
         
         # Fallback: Query projects with has_approved_condition flag
-        projects_with_conditions = session.query(SubmitProjectModel.proponent_id).filter(
-            SubmitProjectModel.has_approved_condition == True
+        projects_with_conditions = session.query(SubmitProject.proponent_id).filter(
+            SubmitProject.has_approved_condition == True
         ).distinct().all()
         
         return {p.proponent_id for p in projects_with_conditions}
@@ -128,8 +129,8 @@ class ProponentStatusUpdater:
         # Query: Join track_works -> track_phases -> projects -> proponents
         # Filter for valid works with enable_submit phases
         valid_work_proponents = (
-            session.query(SubmitProjectModel.proponent_id)
-            .join(TrackWork, SubmitProjectModel.id == TrackWork.project_id)
+            session.query(SubmitProject.proponent_id)
+            .join(TrackWork, SubmitProject.id == TrackWork.project_id)
             .join(TrackPhase, TrackWork.current_phase_id == TrackPhase.id)
             .filter(
                 and_(
@@ -165,11 +166,11 @@ class ProponentStatusUpdater:
         """
         # Query all proponents with no status who are not in the eligible list
         ineligible_proponents = (
-            session.query(SubmitProponentModel.id)
+            session.query(SubmitProponent.id)
             .filter(
                 and_(
-                    SubmitProponentModel.status.is_(None),  # No status set
-                    SubmitProponentModel.id.notin_(eligible_proponent_ids) if eligible_proponent_ids else True
+                    SubmitProponent.status.is_(None),  # No status set
+                    SubmitProponent.id.notin_(eligible_proponent_ids) if eligible_proponent_ids else True
                 )
             )
             .all()
@@ -189,17 +190,17 @@ class ProponentStatusUpdater:
         Args:
             session: Database session
             proponent_ids: Set or list of proponent IDs to update
-            status: ProponentStatus enum value to set
+            status: Status value to set
         """
         if not proponent_ids:
             return
         
-        proponents = session.query(SubmitProponentModel).filter(
+        proponents = session.query(SubmitProponent).filter(
             and_(
-                SubmitProponentModel.id.in_(proponent_ids),
+                SubmitProponent.id.in_(proponent_ids),
                 or_(
-                    SubmitProponentModel.status.is_(None),
-                    SubmitProponentModel.status == ProponentStatus.INELIGIBLE
+                    SubmitProponent.status.is_(None),
+                    SubmitProponent.status == STATUS_INELIGIBLE
                 )
             )
         ).all()
@@ -212,6 +213,6 @@ class ProponentStatusUpdater:
         
         session.commit()
         current_app.logger.info(
-            f"Updated {updated_count} proponents to {status.value} status "
+            f"Updated {updated_count} proponents to {status} status "
             f"(out of {len(proponent_ids)} eligible)"
         )

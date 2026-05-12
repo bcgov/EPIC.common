@@ -1,6 +1,6 @@
 import requests
 from flask import current_app
-from submit_api.models.project import Project as SubmitProjectModel
+from epic_cron.models.external.submit import SubmitProject
 
 class ApprovedConditionService:
     """Service to interact with the Condition API."""
@@ -47,8 +47,8 @@ class ApprovedConditionService:
 
             # Update Projects
             print(f"Updating projects matching {len(epic_guids)} GUIDs...")
-            projects_to_update = session.query(SubmitProjectModel).filter(
-                SubmitProjectModel.epic_guid.in_(epic_guids)
+            projects_to_update = session.query(SubmitProject).filter(
+                SubmitProject.epic_guid.in_(epic_guids)
             ).all()
 
             proponent_ids_to_update = set()

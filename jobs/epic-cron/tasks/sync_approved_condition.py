@@ -16,7 +16,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from epic_cron.models.db import init_submit_db, ma
+from epic_cron.models.db import init_submit_db, init_submit_session, ma
 from epic_cron.services.approved_condition_sync_service import ApprovedConditionService
 
 
@@ -27,6 +27,7 @@ class SyncApprovedCondition:  # pylint:disable=too-few-public-methods
     def sync_approved_condition(cls):
         """Update projects having approved condition."""
         init_submit_db(current_app)
+        submit_session = init_submit_session(current_app)
         ma.init_app(current_app)
         current_app.logger.info('Starting Approved Condition Sync---{}'.format(datetime.now()))
-        ApprovedConditionService.sync_projects_with_approved_conditions()
+        ApprovedConditionService.sync_projects_with_approved_conditions(submit_session)

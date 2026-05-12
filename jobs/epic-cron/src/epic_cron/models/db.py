@@ -56,6 +56,12 @@ def init_submit_db(app):
     return db
 
 
+def init_submit_session(app):
+    """Initialize a session factory for the Submit database."""
+    print("Initializing Submit database session...")
+    return create_session(app.config['SUBMIT_DATABASE_URI'])
+
+
 # Aliases for backward compatibility
 def init_db(app):
     """Initialize the session for the Track database (alias for init_track_db)."""

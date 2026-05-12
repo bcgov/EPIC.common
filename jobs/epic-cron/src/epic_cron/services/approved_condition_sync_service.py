@@ -1,15 +1,13 @@
 import requests
 from flask import current_app
-from submit_api.models.project import Project
-
-from epic_cron.models import db
+from epic_cron.models.external.submit import SubmitProject
 
 
 class ApprovedConditionService:
     """Service to interact with the Condition API."""
 
     @staticmethod
-    def sync_projects_with_approved_conditions():
+    def sync_projects_with_approved_conditions(session_factory):
         """
         Fetch project data from the Condition API
 
@@ -39,32 +37,26 @@ class ApprovedConditionService:
             current_app.logger.info(f"Condition API returned {len(projects)} projects.")
 
             epic_guids = [p.get("epic_guid") for p in projects if p.get("epic_guid")]
-
             updated_count = 0
 
-            for epic_guid in epic_guids:
-                # Fetch the Project by epic_guid
-                project = db.session.query(Project).filter_by(epic_guid=epic_guid).first()
-                if project:
-                    if not project.has_approved_condition:
+            with session_factory() as session:
+                for epic_guid in epic_guids:
+                    project = session.query(SubmitProject).filter_by(epic_guid=epic_guid).first()
+                    if project and not project.has_approved_condition:
                         project.has_approved_condition = True
                         updated_count += 1
 
-            db.session.commit()
+                session.commit()
 
             current_app.logger.info(f"Updated {updated_count} projects with has_approved_condition=True.")
             return {"updated_projects": updated_count}
 
         except requests.RequestException as e:
-            db.session.rollback()
             current_app.logger.error(f"Error while calling Condition API: {e}")
             raise
         except Exception as e:
-            db.session.rollback()
             current_app.logger.error(f"Unexpected error: {e}")
             raise
-        finally:
-            db.session.remove()
 
     @staticmethod
     def _get_admin_token():
