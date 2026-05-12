@@ -4,7 +4,7 @@ from epic_cron.models.external.condition_document import Document as ConditionDo
 from epic_cron.models.external.condition_project import Project as ConditionProjectModel
 from flask import current_app
 
-from epic_cron.models.db import init_conditions_db
+from epic_cron.models.db import init_conditions_db, session_scope
 from epic_cron.services.epic_public_service import EpicPublicService
 
 
@@ -49,7 +49,7 @@ class EpicPublicExtractor:
         project_not_found_examples = []
         existing_examples = []
 
-        with target_session() as session:
+        with session_scope(target_session) as session:
             for doc in documents:
                 try:
                     # Skip if the parent project hasn't been synced yet

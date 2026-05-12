@@ -20,6 +20,7 @@ Business Logic:
 from flask import current_app
 from sqlalchemy import and_, or_
 
+from epic_cron.models.db import session_scope
 from epic_cron.models.external.submit import SubmitProject, SubmitProponent
 from epic_cron.services.approved_condition_service import ApprovedConditionService
 from epic_cron.models.external.track_work import TrackWork
@@ -39,7 +40,7 @@ class ProponentStatusUpdater:
         current_app.logger.info("Running ProponentStatusUpdater...")
         
         try:
-            with session_factory() as session:
+            with session_scope(session_factory) as session:
                 # Find all proponents who should be ELIGIBLE
                 eligible_proponent_ids = cls._find_eligible_proponents(session)
                 

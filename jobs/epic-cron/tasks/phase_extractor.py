@@ -3,7 +3,7 @@ from datetime import datetime
 from epic_cron.models.external.track_phase import TrackPhase as TrackPhaseModel
 from flask import current_app
 
-from epic_cron.models.db import init_submit_session
+from epic_cron.models.db import init_submit_session, session_scope
 from epic_cron.services.track_service import TrackService
 
 
@@ -51,7 +51,7 @@ class PhaseExtractor:
 
         current_app.logger.info(f"Starting upsert of {total_phases} phases into Submit database...")
 
-        with target_session() as session:
+        with session_scope(target_session) as session:
             for phase_dict in track_phases:
                 phase_id = phase_dict.get("id")
 

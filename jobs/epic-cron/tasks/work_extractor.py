@@ -4,7 +4,7 @@ from epic_cron.models.external.track_work import TrackWork as TrackWorkModel
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
-from epic_cron.models.db import init_submit_session
+from epic_cron.models.db import init_submit_session, session_scope
 from epic_cron.services.track_service import TrackService
 
 
@@ -53,7 +53,7 @@ class WorkExtractor:
 
         current_app.logger.info(f"Starting upsert of {total_works} works into Submit database...")
 
-        with target_session() as session:
+        with session_scope(target_session) as session:
             for work_dict in track_works:
                 work_id = work_dict.get("id")
 

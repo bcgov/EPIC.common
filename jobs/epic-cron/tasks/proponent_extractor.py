@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import current_app
-from epic_cron.models.db import init_submit_session
+from epic_cron.models.db import init_submit_session, session_scope
 from epic_cron.models.external.submit import SubmitProponent
 from epic_cron.services.track_service import TrackService
 
@@ -30,7 +30,7 @@ class ProponentExtractor:
         """
         print(f"Syncing proponents into the SUBMIT database...")
 
-        with target_session() as session:
+        with session_scope(target_session) as session:
             try:
                 # Load all existing proponents to minimize DB round-trips
                 existing_proponents = {p.id: p for p in session.query(target_model).all()}

@@ -1,6 +1,7 @@
 import requests
 from flask import current_app
 from epic_cron.models.external.submit import SubmitProject
+from epic_cron.models.db import session_scope
 
 
 class ApprovedConditionService:
@@ -39,7 +40,7 @@ class ApprovedConditionService:
             epic_guids = [p.get("epic_guid") for p in projects if p.get("epic_guid")]
             updated_count = 0
 
-            with session_factory() as session:
+            with session_scope(session_factory) as session:
                 for epic_guid in epic_guids:
                     project = session.query(SubmitProject).filter_by(epic_guid=epic_guid).first()
                     if project and not project.has_approved_condition:

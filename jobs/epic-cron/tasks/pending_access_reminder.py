@@ -16,7 +16,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from submit_cron.models.db import init_centre_db
+from epic_cron.models.db import init_centre_db, session_scope
 from submit_cron.repositories.access_request_repository import AccessRequestRepository
 from submit_cron.services.pending_access_reminder_service import run_pending_access_reminder
 
@@ -29,10 +29,7 @@ class PendingAccessReminder:
         """Query Centre DB for pending access requests and send one reminder email."""
         print("Starting Pending Access Reminder At ", datetime.now())
         session_factory = init_centre_db(current_app)
-        session = session_factory()
-        try:
+        with session_scope(session_factory) as session:
             repo = AccessRequestRepository(session)
             run_pending_access_reminder(repo)
-        finally:
-            session.close()
         print("Completed Pending Access Reminder At ", datetime.now())

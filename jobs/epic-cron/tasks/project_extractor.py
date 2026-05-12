@@ -6,7 +6,7 @@ from epic_cron.models.external.condition_project import Project as ConditionProj
 from epic_cron.models.external.submit import SubmitProject
 from flask import current_app
 
-from epic_cron.models.db import init_submit_session, init_compliance_db, \
+from epic_cron.models.db import init_submit_session, init_compliance_db, session_scope, \
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
 
@@ -57,7 +57,7 @@ class ProjectExtractor:
         updates = 0
         inserts = 0
         
-        with target_session() as session:
+        with session_scope(target_session) as session:
             for index, row in enumerate(track_data):
                 project_dict = dict(row._mapping)
                 current_app.logger.debug(f"Upserting project {index + 1}/{len(track_data)}: {project_dict}")

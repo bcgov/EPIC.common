@@ -11,6 +11,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 from flask import current_app
 
+from epic_cron.models.db import session_scope
+
 
 class SSLChecker:
     """Check SSL certificates for URLs stored in the database."""
@@ -35,64 +37,61 @@ class SSLChecker:
         # Use reflection instead of duplicate model definition
         application_urls = Table('application_urls', metadata, autoload_with=engine)
         
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        session_factory = sessionmaker(bind=engine)
 
         try:
-            cert_cache = {}
+            with session_scope(session_factory) as session:
+                cert_cache = {}
 
-            # Query active URLs
-            query = session.query(application_urls).filter(
-                application_urls.c.is_active == True
-            )
-            urls = query.all()
-            print(f"Found {len(urls)} URLs to check.")
+                # Query active URLs
+                query = session.query(application_urls).filter(
+                    application_urls.c.is_active == True
+                )
+                urls = query.all()
+                print(f"Found {len(urls)} URLs to check.")
 
-            for app_url in urls:
-                print(f"Checking {app_url.app_name} ({app_url.environment}): {app_url.url}")
+                for app_url in urls:
+                    print(f"Checking {app_url.app_name} ({app_url.environment}): {app_url.url}")
 
-                certificate_target = SSLChecker._get_certificate_target(app_url.url)
+                    certificate_target = SSLChecker._get_certificate_target(app_url.url)
 
-                # Skip managed DevOps URLs
-                if "devops.gov.bc.ca" in certificate_target:
-                    print(f"Skipping SSL check for managed URL: {app_url.url}")
-                    SSLChecker._update_url_status(
-                        session, application_urls, app_url.id,
-                        ssl_status='Managed',
-                        ssl_expiry=None,
-                        ssl_error_message=None
-                    )
-                    continue
+                    # Skip managed DevOps URLs
+                    if "devops.gov.bc.ca" in certificate_target:
+                        print(f"Skipping SSL check for managed URL: {app_url.url}")
+                        SSLChecker._update_url_status(
+                            session, application_urls, app_url.id,
+                            ssl_status='Managed',
+                            ssl_expiry=None,
+                            ssl_error_message=None
+                        )
+                        continue
 
-                # Reuse the same certificate lookup for routes on the same host.
-                if certificate_target not in cert_cache:
-                    cert_cache[certificate_target] = SSLChecker._get_ssl_details(certificate_target)
-                cert_details = cert_cache[certificate_target]
-                
-                if cert_details['ssl_expiry']:
-                    ssl_status = SSLChecker._calculate_ssl_status(cert_details['ssl_expiry'])
-                    SSLChecker._update_url_status(
-                        session, application_urls, app_url.id,
-                        ssl_status=ssl_status,
-                        ssl_expiry=cert_details['ssl_expiry'],
-                        ssl_error_message=None
-                    )
-                else:
-                    SSLChecker._update_url_status(
-                        session, application_urls, app_url.id,
-                        ssl_status='Error',
-                        ssl_expiry=None,
-                        ssl_error_message=cert_details['ssl_error_message']
-                    )
-            
-            session.commit()
-            print("SSL Check completed.")
+                    # Reuse the same certificate lookup for routes on the same host.
+                    if certificate_target not in cert_cache:
+                        cert_cache[certificate_target] = SSLChecker._get_ssl_details(certificate_target)
+                    cert_details = cert_cache[certificate_target]
+
+                    if cert_details['ssl_expiry']:
+                        ssl_status = SSLChecker._calculate_ssl_status(cert_details['ssl_expiry'])
+                        SSLChecker._update_url_status(
+                            session, application_urls, app_url.id,
+                            ssl_status=ssl_status,
+                            ssl_expiry=cert_details['ssl_expiry'],
+                            ssl_error_message=None
+                        )
+                    else:
+                        SSLChecker._update_url_status(
+                            session, application_urls, app_url.id,
+                            ssl_status='Error',
+                            ssl_expiry=None,
+                            ssl_error_message=cert_details['ssl_error_message']
+                        )
+
+                session.commit()
+                print("SSL Check completed.")
 
         except Exception as e:
             print(f"Database error: {e}")
-            session.rollback()
-        finally:
-            session.close()
 
     @staticmethod
     def _calculate_ssl_status(expiry_date):
@@ -252,66 +251,64 @@ class SSLChecker:
         metadata = MetaData()
         application_urls = Table("application_urls", metadata, autoload_with=engine)
         email_queue = Table("email_queue", metadata, autoload_with=engine)
-        session = sessionmaker(bind=engine)()
+        session_factory = sessionmaker(bind=engine)
 
         try:
-            if SSLChecker._digest_already_queued(
-                session=session,
-                email_queue=email_queue,
-                report_type=report_type,
-                month_key=month_key,
-            ):
-                print(f"SSL {report_type} digest already queued for {month_key}. Skipping.")
-                return
+            with session_scope(session_factory) as session:
+                if SSLChecker._digest_already_queued(
+                    session=session,
+                    email_queue=email_queue,
+                    report_type=report_type,
+                    month_key=month_key,
+                ):
+                    print(f"SSL {report_type} digest already queued for {month_key}. Skipping.")
+                    return
 
-            urls = session.query(application_urls).filter(
-                application_urls.c.is_active == True
-            ).all()
-            items = SSLChecker._build_digest_items(urls=urls, now=now, next_month_start=next_month_start)
-            summary = SSLChecker._build_summary(items)
-            all_clear = summary["total_action_count"] == 0
+                urls = session.query(application_urls).filter(
+                    application_urls.c.is_active == True
+                ).all()
+                items = SSLChecker._build_digest_items(urls=urls, now=now, next_month_start=next_month_start)
+                summary = SSLChecker._build_summary(items)
+                all_clear = summary["total_action_count"] == 0
 
-            if report_type == "followup" and all_clear:
-                print(f"No outstanding SSL items for follow-up in {month_key}. Skipping.")
-                return
+                if report_type == "followup" and all_clear:
+                    print(f"No outstanding SSL items for follow-up in {month_key}. Skipping.")
+                    return
 
-            recipients = SSLChecker._get_recipients()
-            if not recipients:
-                print("SSL_NOTIFICATION_RECIPIENTS is not configured. Skipping SSL digest queue.")
-                return
+                recipients = SSLChecker._get_recipients()
+                if not recipients:
+                    print("SSL_NOTIFICATION_RECIPIENTS is not configured. Skipping SSL digest queue.")
+                    return
 
-            payload = {
-                "recipients": recipients,
-                "sender": current_app.config.get("SSL_NOTIFICATION_SENDER", "EPIC.centre@gov.bc.ca"),
-                "centre_url": current_app.config.get("EPIC_CENTRE_WEB_URL", "https://centre.eao.gov.bc.ca/application-urls"),
-                "generated_at": now.strftime("%b %d, %Y"),
-                "report_type": report_type,
-                "report_month_label": month_label,
-                "report_month_key": month_key,
-                "environment_label": environment_label,
-                "all_clear": all_clear,
-                "summary": summary,
-                "items": items,
-            }
+                payload = {
+                    "recipients": recipients,
+                    "sender": current_app.config.get("SSL_NOTIFICATION_SENDER", "EPIC.centre@gov.bc.ca"),
+                    "centre_url": current_app.config.get("EPIC_CENTRE_WEB_URL", "https://centre.eao.gov.bc.ca/application-urls"),
+                    "generated_at": now.strftime("%b %d, %Y"),
+                    "report_type": report_type,
+                    "report_month_label": month_label,
+                    "report_month_key": month_key,
+                    "environment_label": environment_label,
+                    "all_clear": all_clear,
+                    "summary": summary,
+                    "items": items,
+                }
 
-            session.execute(
-                email_queue.insert().values(
-                    template_name="ssl_digest_notification.html",
-                    status="PENDING",
-                    payload=payload,
-                    created_at=now,
+                session.execute(
+                    email_queue.insert().values(
+                        template_name="ssl_digest_notification.html",
+                        status="PENDING",
+                        payload=payload,
+                        created_at=now,
+                    )
                 )
-            )
-            session.commit()
-            print(
-                f"Queued SSL {report_type} digest for {month_label} "
-                f"with {summary['total_action_count']} actionable item(s)."
-            )
+                session.commit()
+                print(
+                    f"Queued SSL {report_type} digest for {month_label} "
+                    f"with {summary['total_action_count']} actionable item(s)."
+                )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             print(f"Error generating SSL digest: {exc}")
-            session.rollback()
-        finally:
-            session.close()
 
     @staticmethod
     def _build_digest_items(urls, now, next_month_start):

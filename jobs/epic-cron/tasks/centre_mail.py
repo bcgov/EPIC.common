@@ -16,7 +16,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from epic_cron.models.db import init_centre_db
+from epic_cron.models.db import init_centre_db, session_scope
 from epic_cron.models.db import ma
 from epic_cron.processors.centre import PROCESSORS  # noqa: F401 pylint:disable=unused-import
 from epic_cron.repositories.email_repository import EmailRepository
@@ -30,16 +30,13 @@ class CentreMailer:  # pylint:disable=too-few-public-methods
     def send_mail(cls):
         """Send queued Centre emails using registered processors."""
         current_app.logger.info(f'Starting Centre Email At---{datetime.now()}')
-        _session = init_centre_db(current_app)
-        session = _session()
+        session_factory = init_centre_db(current_app)
         ma.init_app(current_app)
 
-        try:
+        with session_scope(session_factory) as session:
             for template_name, processor in PROCESSORS.items():
                 current_app.logger.debug(f'Registering processor for template: {template_name}')
                 CentreEmailService.register_processor(template_name, processor)
 
             repo = EmailRepository(session)
             CentreEmailService.process_email_queue(repo, limit=100)
-        finally:
-            session.close()

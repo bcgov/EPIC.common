@@ -1,7 +1,7 @@
 from flask import current_app
 from sqlalchemy import MetaData, Table, select, func
 
-from epic_cron.models.db import init_db
+from epic_cron.models.db import init_db, session_scope
 
 
 class TrackService:
@@ -13,7 +13,7 @@ class TrackService:
         current_app.logger.info("Fetching proponents from track database...")
 
         track_session = init_db(current_app)
-        with track_session() as session:
+        with session_scope(track_session) as session:
             track_metadata = MetaData()
             track_proponents_table = Table('proponents', track_metadata, autoload_with=session.bind)
 
@@ -38,7 +38,7 @@ class TrackService:
         ]
 
         track_session = init_db(current_app)
-        with track_session() as session:
+        with session_scope(track_session) as session:
 
             track_metadata = MetaData()
             track_projects_table = Table('projects', track_metadata, autoload_with=session.bind)
@@ -75,7 +75,7 @@ class TrackService:
         current_app.logger.info("Fetching works from track database...")
 
         track_session = init_db(current_app)
-        with track_session() as session:
+        with session_scope(track_session) as session:
             track_metadata = MetaData()
             works_table = Table('works', track_metadata, autoload_with=session.bind)
             projects_table = Table('projects', track_metadata, autoload_with=session.bind)
@@ -156,7 +156,7 @@ class TrackService:
         current_app.logger.info("Fetching phases from track database...")
 
         track_session = init_db(current_app)
-        with track_session() as session:
+        with session_scope(track_session) as session:
             track_metadata = MetaData()
             phase_codes_table = Table('phase_codes', track_metadata, autoload_with=session.bind)
             work_types_table = Table('work_types', track_metadata, autoload_with=session.bind)
