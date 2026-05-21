@@ -17,8 +17,12 @@ SUBMIT_SYNC_FILES = [
     "tasks/proponent_status_updater.py",
     "tasks/sync_approved_condition.py",
     "tasks/work_extractor.py",
+    "src/epic_cron/models/external/submit.py",
+    "src/epic_cron/models/external/submit_v1.py",
+    "src/epic_cron/models/external/submit_v2.py",
     "src/epic_cron/services/approved_condition_service.py",
     "src/epic_cron/services/approved_condition_sync_service.py",
+    "src/epic_cron/services/submit_schema_adapter.py",
 ]
 
 

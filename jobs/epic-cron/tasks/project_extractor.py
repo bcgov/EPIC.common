@@ -3,12 +3,16 @@ from enum import Enum
 
 from epic_cron.models.external.compliance_project import Project as ComplianceProjectModel
 from epic_cron.models.external.condition_project import Project as ConditionProjectModel
-from epic_cron.models.external.submit import SubmitProject
 from flask import current_app
 
 from epic_cron.models.db import init_submit_session, init_compliance_db, session_scope, \
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
+from epic_cron.services.submit_schema_adapter import (
+    build_submit_project_values,
+    get_submit_project_model,
+    normalize_submit_schema_version,
+)
 
 
 class TargetSystem(Enum):
@@ -21,42 +25,55 @@ class ProjectExtractor:
     """Task to run EpicTrack Project Extraction."""
 
     @classmethod
-    def do_sync(cls, target_system=TargetSystem.SUBMIT):
+    def do_sync(cls, target_system=TargetSystem.SUBMIT, submit_schema_version="v1"):
         """Perform the syncing."""
         current_app.logger.info(f"Starting Project Extractor for {target_system.value} at {datetime.now()}")
 
         # Initialize source and target database sessions
         current_app.logger.info("Initializing database sessions...")
 
-        target_session, target_model = cls._get_target_config(target_system)
+        target_session, target_model = cls._get_target_config(target_system, submit_schema_version)
 
         # Step 1: Fetch data from track.projects
         track_data = TrackService.fetch_track_projects()
 
         # Step 2: Upsert records into the target database (update existing or insert new)
-        cls._upsert_into_target_db(track_data, target_session, target_model, target_system)
+        cls._upsert_into_target_db(
+            track_data,
+            target_session,
+            target_model,
+            target_system,
+            submit_schema_version=submit_schema_version,
+        )
 
         current_app.logger.info(f"Project Extractor for {target_system.value} completed at {datetime.now()}")
 
     @staticmethod
-    def _get_target_config(target_system):
+    def _get_target_config(target_system, submit_schema_version="v1"):
         """Get the target database session, model, and required fields based on the target system."""
         if target_system == TargetSystem.SUBMIT:
-            return init_submit_session(current_app), SubmitProject
+            return init_submit_session(current_app), get_submit_project_model(submit_schema_version)
         if target_system == TargetSystem.CONDITIONS:
             return init_conditions_db(current_app), ConditionProjectModel
         return init_compliance_db(current_app), ComplianceProjectModel
 
     @staticmethod
-    def _upsert_into_target_db(track_data, target_session, target_model, target_system):
+    def _upsert_into_target_db(
+        track_data,
+        target_session,
+        target_model,
+        target_system,
+        submit_schema_version="v1",
+    ):
         """Upsert (update or insert) records into the target database."""
+        submit_schema_version = normalize_submit_schema_version(submit_schema_version)
         current_app.logger.info(f"Upserting records into the {target_system.value} database...")
 
         successful_upserts = 0
         failed_upserts = 0
         updates = 0
         inserts = 0
-        
+
         with session_scope(target_session) as session:
             for index, row in enumerate(track_data):
                 project_dict = dict(row._mapping)
@@ -64,6 +81,7 @@ class ProjectExtractor:
 
                 try:
                     if target_system == TargetSystem.SUBMIT:
+                        project_values = build_submit_project_values(project_dict, submit_schema_version)
                         existing_project = session.query(target_model).filter_by(id=project_dict["id"]).first()
 
                         if existing_project:
@@ -73,20 +91,12 @@ class ProjectExtractor:
                                     f"Deleted project ID {project_dict['id']} (marked as deleted in source)"
                                 )
                             else:
-                                existing_project.name = project_dict["name"]
-                                existing_project.epic_guid = project_dict.get("epic_guid")
-                                existing_project.proponent_id = project_dict.get("proponent_id")
-                                existing_project.ea_certificate = project_dict.get("ea_certificate")
+                                for field, value in project_values.items():
+                                    setattr(existing_project, field, value)
                                 updates += 1
                                 current_app.logger.debug(f"Updated existing project ID {project_dict['id']}")
                         else:
-                            project_instance = target_model(
-                                id=project_dict["id"],
-                                name=project_dict["name"],
-                                epic_guid=project_dict.get("epic_guid"),
-                                proponent_id=project_dict.get("proponent_id"),
-                                ea_certificate=project_dict.get("ea_certificate"),
-                            )
+                            project_instance = target_model(**project_values)
                             session.add(project_instance)
                             inserts += 1
                             current_app.logger.debug(f"Inserted new project ID {project_dict['id']}")
@@ -163,7 +173,8 @@ class ProjectExtractor:
                     session.rollback()
 
             current_app.logger.info(
-                f"Summary: Upserted {successful_upserts} records ({inserts} inserts, {updates} updates) into {target_system.value} database."
+                f"Summary: Upserted {successful_upserts} records "
+                f"({inserts} inserts, {updates} updates) into {target_system.value} database."
             )
             if failed_upserts > 0:
                 current_app.logger.warning(f"Summary: Failed to upsert {failed_upserts} records.")
