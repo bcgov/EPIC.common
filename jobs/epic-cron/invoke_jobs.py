@@ -21,10 +21,9 @@ from tasks.sync_approved_condition import SyncApprovedCondition
 from tasks.work_extractor import WorkExtractor
 from tasks.phase_extractor import PhaseExtractor
 from tasks.epic_public_extractor import EpicPublicExtractor
-from epic_cron.services.submit_schema_adapter import (
-    SUBMIT_SCHEMA_V1,
-    SUBMIT_SCHEMA_V2,
-)
+
+SUBMIT_SCHEMA_V1 = "v1"
+SUBMIT_SCHEMA_V2 = "v2"
 
 setup_logging(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'logging.conf'))  # important to do this first
 
@@ -97,7 +96,7 @@ def run(
             # For SUBMIT, we must sync proponents first as they are dependencies
             if target_system == TargetSystem.SUBMIT and submit_schema_version == SUBMIT_SCHEMA_V2:
                 application.logger.info(f'Running Proponent Extractor for {target_system.value}...')
-                ProponentExtractor.do_sync(submit_schema_version=submit_schema_version)
+                ProponentExtractor.do_sync()
                 application.logger.info(f'<<<< Completed Proponent Sync for {target_system.value} >>>')
 
             application.logger.info(f'Running Project Extractor for {target_system.value}...')
@@ -135,7 +134,7 @@ def run(
         elif job_name == 'EXTRACT_WORK':
             application.logger.info('Running Project Extractor for SUBMIT before Work Extraction...')
             if submit_schema_version == SUBMIT_SCHEMA_V2:
-                ProponentExtractor.do_sync(submit_schema_version=submit_schema_version)
+                ProponentExtractor.do_sync()
                 application.logger.info('<<<< Completed Proponent Sync for SUBMIT >>>>')
             ProjectExtractor.do_sync(
                 target_system=TargetSystem.SUBMIT,

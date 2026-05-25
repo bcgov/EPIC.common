@@ -3,16 +3,16 @@ from enum import Enum
 
 from epic_cron.models.external.compliance_project import Project as ComplianceProjectModel
 from epic_cron.models.external.condition_project import Project as ConditionProjectModel
+from epic_cron.models.external.submit_v1 import SubmitProjectV1
+from epic_cron.models.external.submit_v2 import SubmitProjectV2
 from flask import current_app
 
 from epic_cron.models.db import init_submit_session, init_compliance_db, session_scope, \
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
-from epic_cron.services.submit_schema_adapter import (
-    SUBMIT_SCHEMA_V1,
-    build_submit_project_values,
-    get_submit_project_model,
-)
+
+SUBMIT_SCHEMA_V1 = "v1"
+SUBMIT_SCHEMA_V2 = "v2"
 
 
 class TargetSystem(Enum):
@@ -52,7 +52,8 @@ class ProjectExtractor:
     def _get_target_config(target_system, submit_schema_version=SUBMIT_SCHEMA_V1):
         """Get the target database session, model, and required fields based on the target system."""
         if target_system == TargetSystem.SUBMIT:
-            return init_submit_session(current_app), get_submit_project_model(submit_schema_version)
+            target_model = SubmitProjectV1 if submit_schema_version == SUBMIT_SCHEMA_V1 else SubmitProjectV2
+            return init_submit_session(current_app), target_model
         if target_system == TargetSystem.CONDITIONS:
             return init_conditions_db(current_app), ConditionProjectModel
         return init_compliance_db(current_app), ComplianceProjectModel
@@ -80,7 +81,16 @@ class ProjectExtractor:
 
                 try:
                     if target_system == TargetSystem.SUBMIT:
-                        project_values = build_submit_project_values(project_dict, submit_schema_version)
+                        project_values = {
+                            "id": project_dict["id"],
+                            "name": project_dict["name"],
+                            "epic_guid": project_dict.get("epic_guid"),
+                            "proponent_id": project_dict.get("proponent_id"),
+                            "ea_certificate": project_dict.get("ea_certificate"),
+                        }
+                        if submit_schema_version == SUBMIT_SCHEMA_V1:
+                            project_values["proponent_name"] = project_dict.get("proponent_name")
+
                         existing_project = session.query(target_model).filter_by(id=project_dict["id"]).first()
 
                         if existing_project:

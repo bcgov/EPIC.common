@@ -22,7 +22,6 @@ SUBMIT_SYNC_FILES = [
     "src/epic_cron/models/external/submit_v2.py",
     "src/epic_cron/services/approved_condition_service.py",
     "src/epic_cron/services/approved_condition_sync_service.py",
-    "src/epic_cron/services/submit_schema_adapter.py",
 ]
 
 
