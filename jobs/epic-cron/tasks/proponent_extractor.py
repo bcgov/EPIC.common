@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import current_app
 from epic_cron.models.db import init_submit_session, session_scope
-from epic_cron.services.submit_schema_adapter import DEFAULT_SUBMIT_SCHEMA_VERSION, get_submit_proponent_model
+from epic_cron.services.submit_schema_adapter import SUBMIT_SCHEMA_V1, get_submit_proponent_model
 from epic_cron.services.track_service import TrackService
 
 
@@ -9,7 +9,7 @@ class ProponentExtractor:
     """Task to run EpicTrack Proponent Extraction."""
 
     @classmethod
-    def do_sync(cls, submit_schema_version=DEFAULT_SUBMIT_SCHEMA_VERSION):
+    def do_sync(cls, submit_schema_version=SUBMIT_SCHEMA_V1):
         """Perform the syncing."""
         print(f"Starting Proponent Extractor at {datetime.now()}")
 

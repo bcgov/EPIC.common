@@ -5,31 +5,16 @@ from pathlib import Path
 import pytest
 
 from epic_cron.services.submit_schema_adapter import (
-    DEFAULT_SUBMIT_SCHEMA_VERSION,
+    SUBMIT_SCHEMA_V1,
     build_submit_project_values,
     get_submit_project_model,
     get_submit_proponent_model,
-    normalize_submit_schema_version,
 )
 
 
-def test_submit_schema_defaults_to_v1():
+def test_submit_schema_default_constant_is_v1():
     """Default Submit schema version is prod-safe v1."""
-    assert DEFAULT_SUBMIT_SCHEMA_VERSION == "v1"
-    assert normalize_submit_schema_version() == "v1"
-    assert normalize_submit_schema_version("") == "v1"
-
-
-def test_submit_schema_normalizes_valid_values():
-    """Schema version arguments are normalized before use."""
-    assert normalize_submit_schema_version("V1") == "v1"
-    assert normalize_submit_schema_version(" v2 ") == "v2"
-
-
-def test_submit_schema_rejects_invalid_values():
-    """Unsupported schema versions fail clearly."""
-    with pytest.raises(ValueError, match="Submit schema version must be v1 or v2"):
-        normalize_submit_schema_version("v3")
+    assert SUBMIT_SCHEMA_V1 == "v1"
 
 
 def test_project_values_include_proponent_name_only_for_v1():

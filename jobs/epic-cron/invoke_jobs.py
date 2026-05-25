@@ -22,9 +22,8 @@ from tasks.work_extractor import WorkExtractor
 from tasks.phase_extractor import PhaseExtractor
 from tasks.epic_public_extractor import EpicPublicExtractor
 from epic_cron.services.submit_schema_adapter import (
-    DEFAULT_SUBMIT_SCHEMA_VERSION,
-    is_submit_schema_v2,
-    normalize_submit_schema_version,
+    SUBMIT_SCHEMA_V1,
+    SUBMIT_SCHEMA_V2,
 )
 
 setup_logging(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'logging.conf'))  # important to do this first
@@ -72,9 +71,15 @@ def email_sender(target_system='SUBMIT'):
         raise ValueError(f'Invalid target_system: {target_system}')
 
 
-def _get_submit_schema_version_arg(args, index=1):
-    """Return the optional Submit schema version positional argument."""
-    return normalize_submit_schema_version(args[index] if len(args) > index else DEFAULT_SUBMIT_SCHEMA_VERSION)
+def _get_submit_schema_version(args, index=1):
+    """Return the optional Submit schema version argument."""
+    if len(args) <= index:
+        return SUBMIT_SCHEMA_V1
+
+    schema_version = args[index]
+    if schema_version not in (SUBMIT_SCHEMA_V1, SUBMIT_SCHEMA_V2):
+        raise ValueError("Submit schema version must be v1 or v2")
+    return schema_version
 
 
 def run(
@@ -82,16 +87,15 @@ def run(
     target_system=None,
     file_path=None,
     ssl_email_option=None,
-    submit_schema_version=DEFAULT_SUBMIT_SCHEMA_VERSION,
+    submit_schema_version=SUBMIT_SCHEMA_V1,
 ):
     """Main function to run the job."""
-    submit_schema_version = normalize_submit_schema_version(submit_schema_version)
     application = create_app()
 
     with application.app_context():
         if job_name == 'EXTRACT_PROJECT':
             # For SUBMIT, we must sync proponents first as they are dependencies
-            if target_system == TargetSystem.SUBMIT and is_submit_schema_v2(submit_schema_version):
+            if target_system == TargetSystem.SUBMIT and submit_schema_version == SUBMIT_SCHEMA_V2:
                 application.logger.info(f'Running Proponent Extractor for {target_system.value}...')
                 ProponentExtractor.do_sync(submit_schema_version=submit_schema_version)
                 application.logger.info(f'<<<< Completed Proponent Sync for {target_system.value} >>>')
@@ -104,7 +108,7 @@ def run(
             application.logger.info(f'Completed Project Sync for {target_system.value}')
 
             # Update proponent eligibility status after project sync (Submit v2 only).
-            if target_system == TargetSystem.SUBMIT and is_submit_schema_v2(submit_schema_version):
+            if target_system == TargetSystem.SUBMIT and submit_schema_version == SUBMIT_SCHEMA_V2:
                 from epic_cron.models.db import init_submit_session
                 application.logger.info('Running Proponent Status Updater...')
                 ProponentStatusUpdater.update(init_submit_session(application))
@@ -130,7 +134,7 @@ def run(
             application.logger.info('<<<< Completed Pending Access Reminder >>>>')
         elif job_name == 'EXTRACT_WORK':
             application.logger.info('Running Project Extractor for SUBMIT before Work Extraction...')
-            if is_submit_schema_v2(submit_schema_version):
+            if submit_schema_version == SUBMIT_SCHEMA_V2:
                 ProponentExtractor.do_sync(submit_schema_version=submit_schema_version)
                 application.logger.info('<<<< Completed Proponent Sync for SUBMIT >>>>')
             ProjectExtractor.do_sync(
@@ -186,7 +190,7 @@ if __name__ == "__main__":
 
     elif job_type == "EXTRACT_WORK":
         try:
-            submit_schema_version = _get_submit_schema_version_arg(args)
+            submit_schema_version = _get_submit_schema_version(args)
         except ValueError as err:
             logger.error(str(err))
             sys.exit(1)
@@ -224,9 +228,9 @@ if __name__ == "__main__":
             sys.exit(1)
 
         try:
-            submit_schema_version = DEFAULT_SUBMIT_SCHEMA_VERSION
+            submit_schema_version = SUBMIT_SCHEMA_V1
             if target_system == TargetSystem.SUBMIT:
-                submit_schema_version = _get_submit_schema_version_arg(args)
+                submit_schema_version = _get_submit_schema_version(args)
         except ValueError as err:
             logger.error(str(err))
             sys.exit(1)

@@ -9,9 +9,9 @@ from epic_cron.models.db import init_submit_session, init_compliance_db, session
     init_conditions_db  # Function that initializes DB engines
 from epic_cron.services.track_service import TrackService
 from epic_cron.services.submit_schema_adapter import (
+    SUBMIT_SCHEMA_V1,
     build_submit_project_values,
     get_submit_project_model,
-    normalize_submit_schema_version,
 )
 
 
@@ -25,7 +25,7 @@ class ProjectExtractor:
     """Task to run EpicTrack Project Extraction."""
 
     @classmethod
-    def do_sync(cls, target_system=TargetSystem.SUBMIT, submit_schema_version="v1"):
+    def do_sync(cls, target_system=TargetSystem.SUBMIT, submit_schema_version=SUBMIT_SCHEMA_V1):
         """Perform the syncing."""
         current_app.logger.info(f"Starting Project Extractor for {target_system.value} at {datetime.now()}")
 
@@ -49,7 +49,7 @@ class ProjectExtractor:
         current_app.logger.info(f"Project Extractor for {target_system.value} completed at {datetime.now()}")
 
     @staticmethod
-    def _get_target_config(target_system, submit_schema_version="v1"):
+    def _get_target_config(target_system, submit_schema_version=SUBMIT_SCHEMA_V1):
         """Get the target database session, model, and required fields based on the target system."""
         if target_system == TargetSystem.SUBMIT:
             return init_submit_session(current_app), get_submit_project_model(submit_schema_version)
@@ -63,10 +63,9 @@ class ProjectExtractor:
         target_session,
         target_model,
         target_system,
-        submit_schema_version="v1",
+        submit_schema_version=SUBMIT_SCHEMA_V1,
     ):
         """Upsert (update or insert) records into the target database."""
-        submit_schema_version = normalize_submit_schema_version(submit_schema_version)
         current_app.logger.info(f"Upserting records into the {target_system.value} database...")
 
         successful_upserts = 0
