@@ -43,7 +43,6 @@ def test_document_type_map_uses_condition_document_type_names():
             "type-a": "Other Order",
             "type-b": "Certificate",
         }
-        assert EpicPublicService.get_source_document_type_ids() == ["type-a", "type-b"]
 
 
 def test_fetch_all_documents_uses_resolved_document_type_id():
@@ -56,7 +55,7 @@ def test_fetch_all_documents_uses_resolved_document_type_id():
         "legislation": 2002,
         "project": {"_id": "project-1"},
     }]
-    app = _app({"EPIC_PUBLIC_DOCUMENT_TYPE_MAP": "type-a:Other Order"})
+    app = _app()
 
     with app.app_context(), patch.object(EpicPublicService, "_fetch_documents_by_type", return_value=raw_docs):
         documents = EpicPublicService.fetch_all_documents(

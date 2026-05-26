@@ -47,11 +47,6 @@ class EpicPublicService:
         return result
 
     @classmethod
-    def get_source_document_type_ids(cls):
-        """Return EPIC Public source type IDs to fetch from the map keys."""
-        return list(cls.get_document_type_name_map().keys())
-
-    @classmethod
     def fetch_all_documents(cls, document_type_id_map=None, default_document_type_id=None):
         """Fetch all documents across all configured document types.
 
@@ -64,14 +59,14 @@ class EpicPublicService:
             list[dict]: Combined list of mapped document dicts from all types.
         """
         document_type_id_map = document_type_id_map or {}
-        source_type_ids = cls.get_source_document_type_ids()
+        source_type_ids = list(document_type_id_map.keys())
         current_app.logger.info(
             "EPIC Public fetch starting with base_url=%s search_path=%s source_type_ids=%s "
             "type_map_size=%s max_pages=%s max_documents=%s",
             current_app.config.get("EPIC_PUBLIC_BASE_URL", "https://projects.eao.gov.bc.ca"),
             current_app.config.get("EPIC_PUBLIC_SEARCH_PATH", cls.DEFAULT_SEARCH_PATH),
             source_type_ids,
-            len(cls.get_document_type_name_map()),
+            len(document_type_id_map),
             cls._get_optional_int_config("EPIC_PUBLIC_MAX_PAGES"),
             cls._get_optional_int_config("EPIC_PUBLIC_MAX_DOCUMENTS"),
         )
