@@ -11,7 +11,7 @@ class EpicPublicService:
     MAX_RETRIES = 3
     RETRY_DELAY = 5  # seconds between retries on transient errors
 
-    DEFAULT_DOCUMENT_TYPE_ID = 1
+    DEFAULT_DOCUMENT_TYPE_NAME = "Certificate"
     DEFAULT_SEARCH_PATH = "/api/public/search"
 
     @classmethod
@@ -27,68 +27,78 @@ class EpicPublicService:
             return None
 
     @classmethod
-    def _get_document_type_id_map(cls):
-        """Return the document type ID map from EPIC_PUBLIC_DOCUMENT_TYPE_ID_MAP config.
+    def get_document_type_name_map(cls):
+        """Return the document type map from EPIC_PUBLIC_DOCUMENT_TYPE_MAP config.
 
-        Format: comma-separated "epicId:conditionTypeId" pairs.
-        Example: "5cf00c03a266b7e1877504d1:3,5cf00c03a266b7e1877504d5:1"
+        Format: comma-separated "epicId:conditionDocumentType" pairs.
+        Example: "5cf00c03a266b7e1877504d1:Other Order,5cf00c03a266b7e1877504d5:Certificate"
         """
-        configured = current_app.config.get("EPIC_PUBLIC_DOCUMENT_TYPE_ID_MAP", "")
+        configured = current_app.config.get("EPIC_PUBLIC_DOCUMENT_TYPE_MAP", "")
         result = {}
         for pair in configured.split(","):
             pair = pair.strip()
             if ":" not in pair:
                 continue
-            epic_id, _, cond_id = pair.partition(":")
+            epic_id, _, document_type_name = pair.partition(":")
             epic_id = epic_id.strip()
-            cond_id = cond_id.strip()
-            if epic_id and cond_id.isdigit():
-                result[epic_id] = int(cond_id)
+            document_type_name = document_type_name.strip()
+            if epic_id and document_type_name:
+                result[epic_id] = document_type_name
         return result
 
     @classmethod
-    def _get_document_type_ids(cls):
-        """Return the list of document type IDs to fetch, from config or the type map keys."""
-        configured = current_app.config.get("EPIC_PUBLIC_DOCUMENT_TYPE_IDS", "")
-        if configured:
-            return [t.strip() for t in configured.split(",") if t.strip()]
-        return list(cls._get_document_type_id_map().keys())
+    def get_source_document_type_ids(cls):
+        """Return EPIC Public source type IDs to fetch from the map keys."""
+        return list(cls.get_document_type_name_map().keys())
 
     @classmethod
-    def fetch_all_documents(cls):
+    def fetch_all_documents(cls, document_type_id_map=None, default_document_type_id=None):
         """Fetch all documents across all configured document types.
+
+        Args:
+            document_type_id_map: EPIC Public type ID to resolved Condition document_types.id.
+            default_document_type_id: Resolved Condition type ID used when no type-specific
+                mapping exists, preserving the previous default behavior without hardcoded DB IDs.
 
         Returns:
             list[dict]: Combined list of mapped document dicts from all types.
         """
-        type_ids = cls._get_document_type_ids()
+        document_type_id_map = document_type_id_map or {}
+        source_type_ids = cls.get_source_document_type_ids()
         current_app.logger.info(
-            "EPIC Public fetch starting with base_url=%s search_path=%s configured_type_ids=%s "
+            "EPIC Public fetch starting with base_url=%s search_path=%s source_type_ids=%s "
             "type_map_size=%s max_pages=%s max_documents=%s",
             current_app.config.get("EPIC_PUBLIC_BASE_URL", "https://projects.eao.gov.bc.ca"),
             current_app.config.get("EPIC_PUBLIC_SEARCH_PATH", cls.DEFAULT_SEARCH_PATH),
-            type_ids,
-            len(cls._get_document_type_id_map()),
+            source_type_ids,
+            len(cls.get_document_type_name_map()),
             cls._get_optional_int_config("EPIC_PUBLIC_MAX_PAGES"),
             cls._get_optional_int_config("EPIC_PUBLIC_MAX_DOCUMENTS"),
         )
 
-        if not type_ids:
+        if not source_type_ids:
             current_app.logger.warning(
-                "No EPIC Public document type IDs configured; fetching all published PROJECT "
+                "No EPIC Public document type map configured; fetching all published PROJECT "
                 "documents without a type filter."
             )
             raw_docs = cls._fetch_documents_by_type()
-            mapped = cls._map_documents(raw_docs)
+            mapped = cls._map_documents(
+                raw_docs,
+                document_type_id=default_document_type_id,
+            )
             current_app.logger.info(f"Fetched {len(mapped)} documents without type filtering.")
             return mapped
 
         all_documents = []
-        for type_id in type_ids:
-            raw_docs = cls._fetch_documents_by_type(type_id)
-            mapped = cls._map_documents(raw_docs, type_id)
+        for source_type_id in source_type_ids:
+            raw_docs = cls._fetch_documents_by_type(source_type_id)
+            mapped = cls._map_documents(
+                raw_docs,
+                source_type_id,
+                document_type_id=document_type_id_map[source_type_id],
+            )
             all_documents.extend(mapped)
-            current_app.logger.info(f"Type {type_id}: {len(mapped)} documents mapped.")
+            current_app.logger.info(f"Type {source_type_id}: {len(mapped)} documents mapped.")
 
         current_app.logger.info(f"Total documents fetched across all types: {len(all_documents)}")
         return all_documents
@@ -234,18 +244,18 @@ class EpicPublicService:
                 raise
 
     @classmethod
-    def _map_documents(cls, raw_docs, type_id=None):
+    def _map_documents(cls, raw_docs, type_id=None, document_type_id=None):
         """Map raw EPIC Public document records to the format expected by the extractor.
 
         Args:
             raw_docs: Raw document dicts from the EPIC Public API.
             type_id: The optional EPIC Public type ID used to fetch these docs.
+            document_type_id: Resolved Condition document_types.id for these docs.
 
         Returns:
             list[dict]: Mapped documents, skipping any with missing required fields.
         """
         mapped = []
-        condition_type_id = cls._get_document_type_id_map().get(type_id, cls.DEFAULT_DOCUMENT_TYPE_ID)
         skipped_missing_document_id = 0
         skipped_missing_project_id = 0
 
@@ -269,7 +279,7 @@ class EpicPublicService:
                 "date_issued": item.get("datePosted"),
                 "act": item.get("legislation"),
                 "project_id": str(project_id),
-                "document_type_id": condition_type_id,
+                "document_type_id": document_type_id,
             })
 
         current_app.logger.info(
@@ -279,6 +289,6 @@ class EpicPublicService:
             len(mapped),
             skipped_missing_document_id,
             skipped_missing_project_id,
-            condition_type_id,
+            document_type_id,
         )
         return mapped

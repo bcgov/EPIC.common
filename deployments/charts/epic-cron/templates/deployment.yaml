@@ -252,16 +252,16 @@ spec:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
                   key: EPIC_PUBLIC_SEARCH_PATH
-            - name: EPIC_PUBLIC_DOCUMENT_TYPE_IDS
+            - name: EPIC_PUBLIC_DOCUMENT_TYPE_MAP
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
-                  key: EPIC_PUBLIC_DOCUMENT_TYPE_IDS
-            - name: EPIC_PUBLIC_DOCUMENT_TYPE_ID_MAP
+                  key: EPIC_PUBLIC_DOCUMENT_TYPE_MAP
+            - name: EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
-                  key: EPIC_PUBLIC_DOCUMENT_TYPE_ID_MAP
+                  key: EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE
             - name: EPIC_PUBLIC_MAX_PAGES
               valueFrom:
                 configMapKeyRef:
