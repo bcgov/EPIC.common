@@ -118,7 +118,7 @@ def test_document_type_lookup_fails_for_missing_condition_type():
             DocumentTypeRow(1, "Certificate"),
         ]
 
-        with pytest.raises(ValueError, match="Missing Condition document_types"):
+        with pytest.raises(ValueError, match="references document type"):
             EpicPublicExtractor._get_document_type_ids_by_name(
                 object(),
                 ["Certificate", "Other Order"],

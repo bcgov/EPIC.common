@@ -63,25 +63,20 @@ class EpicPublicExtractor:
     @classmethod
     def _get_document_type_ids_by_name(cls, target_session, document_type_names):
         """Look up Condition document_types.id values by exact document_type names."""
-        requested_names = sorted({
-            document_type_name.strip()
-            for document_type_name in document_type_names
-            if document_type_name and document_type_name.strip()
-        })
-        if not requested_names:
-            return {}
-
         with session_scope(target_session) as session:
             rows = session.query(ConditionDocumentTypeModel).filter(
-                ConditionDocumentTypeModel.document_type.in_(requested_names)
+                ConditionDocumentTypeModel.document_type.in_(document_type_names)
             ).all()
 
         document_type_ids = {row.document_type: row.id for row in rows}
-        missing_names = [name for name in requested_names if name not in document_type_ids]
-        if missing_names:
+        missing_document_types = [
+            name for name in document_type_names
+            if name not in document_type_ids
+        ]
+        if missing_document_types:
             raise ValueError(
-                "Invalid EPIC Public document type mapping. "
-                f"Missing Condition document_types: {missing_names}."
+                "EPIC_PUBLIC_DOCUMENT_TYPE_MAP references document type(s) that do not exist "
+                f"in condition.document_types: {missing_document_types}."
             )
 
         return document_type_ids
