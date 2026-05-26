@@ -47,12 +47,19 @@ class EpicPublicExtractor:
         target_name_to_id = cls._get_document_type_ids_by_name(target_session, target_type_names)
 
         if not source_type_to_target_name:
-            return {}, target_name_to_id[EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME]
+            return {}, target_name_to_id.get(EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME)
 
-        source_type_to_target_id = {
-            source_type_id: target_name_to_id[target_name]
-            for source_type_id, target_name in source_type_to_target_name.items()
-        }
+        source_type_to_target_id = {}
+        for source_type_id, target_name in source_type_to_target_name.items():
+            target_id = target_name_to_id.get(target_name)
+            if target_id is None:
+                current_app.logger.error(
+                    "Skipping EPIC Public source type %s because %s was not found in condition.document_types.",
+                    source_type_id,
+                    target_name,
+                )
+                continue
+            source_type_to_target_id[source_type_id] = target_id
 
         current_app.logger.info(
             "Resolved EPIC Public target document types: mapped_type_count=%s",
@@ -68,18 +75,7 @@ class EpicPublicExtractor:
                 ConditionDocumentTypeModel.document_type.in_(document_type_names)
             ).all()
 
-        document_type_ids = {row.document_type: row.id for row in rows}
-        missing_document_types = [
-            name for name in document_type_names
-            if name not in document_type_ids
-        ]
-        if missing_document_types:
-            raise ValueError(
-                "EPIC_PUBLIC_DOCUMENT_TYPE_MAP references document type(s) that do not exist "
-                f"in condition.document_types: {missing_document_types}."
-            )
-
-        return document_type_ids
+        return {row.document_type: row.id for row in rows}
 
     @classmethod
     def _sync_documents(cls, documents, target_session):

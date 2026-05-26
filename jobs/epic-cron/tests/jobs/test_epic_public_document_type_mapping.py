@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from flask import Flask
 
 
@@ -108,18 +107,39 @@ def test_resolve_document_type_config_uses_default_when_map_is_empty():
     assert default_document_type_id == 1
 
 
-def test_document_type_lookup_fails_for_missing_condition_type():
-    """Bad config should fail loudly instead of falling back to an incorrect ID."""
-    app = _app()
+def test_resolve_document_type_config_skips_missing_condition_type():
+    """Bad config skips only the source type that cannot resolve a target type."""
+    app = _app({
+        "EPIC_PUBLIC_DOCUMENT_TYPE_MAP": "source-cert:Certificate,source-other:Other Order",
+    })
 
-    with app.app_context(), patch("tasks.epic_public_extractor.session_scope") as session_scope:
+    with app.app_context(), \
+            patch.object(app.logger, "error") as log_error, \
+            patch("tasks.epic_public_extractor.session_scope") as session_scope:
         session = session_scope.return_value.__enter__.return_value
         session.query.return_value.filter.return_value.all.return_value = [
             DocumentTypeRow(1, "Certificate"),
         ]
 
-        with pytest.raises(ValueError, match="references document type"):
-            EpicPublicExtractor._get_document_type_ids_by_name(
-                object(),
-                ["Certificate", "Other Order"],
-            )
+        document_type_id_map, default_document_type_id = EpicPublicExtractor._resolve_document_type_config(object())
+
+    assert document_type_id_map == {"source-cert": 1}
+    assert default_document_type_id is None
+    log_error.assert_called_once()
+
+
+def test_fetch_all_documents_returns_empty_when_no_document_type_resolves():
+    """Documents are not fetched when no target document type can be resolved."""
+    app = _app()
+
+    with app.app_context(), \
+            patch.object(app.logger, "error") as log_error, \
+            patch.object(EpicPublicService, "_fetch_documents_by_type") as fetch_documents:
+        documents = EpicPublicService.fetch_all_documents(
+            document_type_id_map={},
+            default_document_type_id=None,
+        )
+
+    assert documents == []
+    fetch_documents.assert_not_called()
+    log_error.assert_called_once()

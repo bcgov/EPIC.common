@@ -72,6 +72,12 @@ class EpicPublicService:
         )
 
         if not source_type_ids:
+            if default_document_type_id is None:
+                current_app.logger.error(
+                    "No EPIC Public source type mappings were resolved; no documents will be fetched."
+                )
+                return []
+
             current_app.logger.warning(
                 "No EPIC Public document type map configured; fetching all published PROJECT "
                 "documents without a type filter."
