@@ -38,7 +38,6 @@ data:
   EPIC_PUBLIC_BASE_URL: "{{ .Values.EPIC_PUBLIC.baseUrl }}"
   EPIC_PUBLIC_SEARCH_PATH: "{{ .Values.EPIC_PUBLIC.searchPath }}"
   EPIC_PUBLIC_DOCUMENT_TYPE_MAP: "{{ .Values.EPIC_PUBLIC.documentTypeMap }}"
-  EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE: "{{ .Values.EPIC_PUBLIC.defaultDocumentType }}"
   EPIC_PUBLIC_MAX_PAGES: "{{ .Values.EPIC_PUBLIC.maxPages }}"
   EPIC_PUBLIC_MAX_DOCUMENTS: "{{ .Values.EPIC_PUBLIC.maxDocuments }}"
   ENABLE_DETAILED_LOGS: "{{ .Values.EPIC_PUBLIC.enableDetailedLogs }}"

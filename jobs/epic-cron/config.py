@@ -109,7 +109,6 @@ class _Config():  # pylint: disable=too-few-public-methods
     EPIC_PUBLIC_BASE_URL = os.getenv("EPIC_PUBLIC_BASE_URL", "https://projects.eao.gov.bc.ca")
     EPIC_PUBLIC_SEARCH_PATH = os.getenv("EPIC_PUBLIC_SEARCH_PATH", "/api/public/search")
     EPIC_PUBLIC_DOCUMENT_TYPE_MAP = os.getenv("EPIC_PUBLIC_DOCUMENT_TYPE_MAP", "")
-    EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE = os.getenv("EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE", "Certificate")
     EPIC_PUBLIC_MAX_PAGES = os.getenv("EPIC_PUBLIC_MAX_PAGES", "")
     EPIC_PUBLIC_MAX_DOCUMENTS = os.getenv("EPIC_PUBLIC_MAX_DOCUMENTS", "")
     KEYCLOAK_BASE_URL = os.getenv('KEYCLOAK_BASE_URL')

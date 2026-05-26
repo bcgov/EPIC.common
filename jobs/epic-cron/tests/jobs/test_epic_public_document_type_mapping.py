@@ -95,9 +95,7 @@ def test_resolve_document_type_config_queries_condition_document_types():
 
 def test_resolve_document_type_config_uses_default_when_map_is_empty():
     """An empty map resolves the default type for unfiltered EPIC Public fetches."""
-    app = _app({
-        "EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE": "Certificate",
-    })
+    app = _app()
 
     with app.app_context(), patch("tasks.epic_public_extractor.session_scope") as session_scope:
         session = session_scope.return_value.__enter__.return_value

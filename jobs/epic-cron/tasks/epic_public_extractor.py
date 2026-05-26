@@ -18,14 +18,10 @@ class EpicPublicExtractor:
         """Perform the sync from EPIC Public to the Condition Repo."""
         current_app.logger.info(f"Starting Stepped EPIC Public Extractor at {datetime.now()}")
         current_app.logger.info(
-            "EPIC Public extractor config summary: base_url=%s search_path=%s type_map=%s default_type=%s",
+            "EPIC Public extractor config summary: base_url=%s search_path=%s type_map=%s",
             current_app.config.get("EPIC_PUBLIC_BASE_URL"),
             current_app.config.get("EPIC_PUBLIC_SEARCH_PATH", "/api/public/search"),
             current_app.config.get("EPIC_PUBLIC_DOCUMENT_TYPE_MAP", ""),
-            current_app.config.get(
-                "EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE",
-                EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME,
-            ),
         )
 
         target_session = init_conditions_db(current_app)
@@ -46,10 +42,7 @@ class EpicPublicExtractor:
         """Resolve configured Condition document type names to database IDs once per run."""
         source_type_to_target_name = EpicPublicService.get_document_type_name_map()
         if not source_type_to_target_name:
-            default_document_type_name = cls._get_default_document_type_name()
-            if not default_document_type_name:
-                raise ValueError("EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE is required when the type map is empty.")
-
+            default_document_type_name = EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME
             resolved_ids = cls._get_document_type_ids_by_name(target_session, [default_document_type_name])
             return {}, resolved_ids[default_document_type_name]
 
@@ -65,14 +58,6 @@ class EpicPublicExtractor:
             len(source_type_to_target_id),
         )
         return source_type_to_target_id, None
-
-    @classmethod
-    def _get_default_document_type_name(cls):
-        """Return the Condition document type name used when the source map is empty."""
-        return str(current_app.config.get(
-            "EPIC_PUBLIC_DEFAULT_DOCUMENT_TYPE",
-            EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME,
-        ) or "").strip()
 
     @classmethod
     def _get_document_type_ids_by_name(cls, target_session, document_type_names):
