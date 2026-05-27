@@ -11,7 +11,6 @@ class EpicPublicService:
     MAX_RETRIES = 3
     RETRY_DELAY = 5  # seconds between retries on transient errors
 
-    DEFAULT_DOCUMENT_TYPE_NAME = "Certificate"
     DEFAULT_SEARCH_PATH = "/api/public/search"
 
     @classmethod
@@ -47,13 +46,11 @@ class EpicPublicService:
         return result
 
     @classmethod
-    def fetch_all_documents(cls, document_type_id_map=None, default_document_type_id=None):
+    def fetch_all_documents(cls, document_type_id_map=None):
         """Fetch all documents across all configured document types.
 
         Args:
             document_type_id_map: EPIC Public type ID to resolved Condition document_types.id.
-            default_document_type_id: Resolved Condition type ID used when no type-specific
-                mapping exists, preserving the previous default behavior without hardcoded DB IDs.
 
         Returns:
             list[dict]: Combined list of mapped document dicts from all types.
@@ -72,23 +69,10 @@ class EpicPublicService:
         )
 
         if not source_type_ids:
-            if default_document_type_id is None:
-                current_app.logger.error(
-                    "No EPIC Public source type mappings were resolved; no documents will be fetched."
-                )
-                return []
-
-            current_app.logger.warning(
-                "No EPIC Public document type map configured; fetching all published PROJECT "
-                "documents without a type filter."
+            current_app.logger.error(
+                "No EPIC Public source type mappings were resolved; no documents will be fetched."
             )
-            raw_docs = cls._fetch_documents_by_type()
-            mapped = cls._map_documents(
-                raw_docs,
-                document_type_id=default_document_type_id,
-            )
-            current_app.logger.info(f"Fetched {len(mapped)} documents without type filtering.")
-            return mapped
+            return []
 
         all_documents = []
         for source_type_id in source_type_ids:

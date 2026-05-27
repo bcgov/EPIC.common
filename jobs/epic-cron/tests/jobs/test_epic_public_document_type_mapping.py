@@ -59,7 +59,6 @@ def test_fetch_all_documents_uses_resolved_document_type_id():
     with app.app_context(), patch.object(EpicPublicService, "_fetch_documents_by_type", return_value=raw_docs):
         documents = EpicPublicService.fetch_all_documents(
             document_type_id_map={"type-a": 4},
-            default_document_type_id=1,
         )
 
     assert documents == [{
@@ -85,51 +84,26 @@ def test_resolve_document_type_config_queries_condition_document_types():
             DocumentTypeRow(4, "Other Order"),
         ]
 
-        document_type_id_map, default_document_type_id = EpicPublicExtractor._resolve_document_type_config(object())
+        document_type_id_map = EpicPublicExtractor._resolve_document_type_config(object())
 
     assert document_type_id_map == {"source-other": 4}
-    assert default_document_type_id is None
 
 
-def test_resolve_document_type_config_uses_default_when_map_is_empty():
-    """An empty map resolves the default type for unfiltered EPIC Public fetches."""
+def test_resolve_document_type_config_returns_empty_when_map_is_empty():
+    """An empty map does not resolve any source type mapping."""
     app = _app()
 
     with app.app_context(), patch("tasks.epic_public_extractor.session_scope") as session_scope:
         session = session_scope.return_value.__enter__.return_value
-        session.query.return_value.filter.return_value.all.return_value = [
-            DocumentTypeRow(1, "Certificate"),
-        ]
+        session.query.return_value.filter.return_value.all.return_value = []
 
-        document_type_id_map, default_document_type_id = EpicPublicExtractor._resolve_document_type_config(object())
+        document_type_id_map = EpicPublicExtractor._resolve_document_type_config(object())
 
     assert document_type_id_map == {}
-    assert default_document_type_id == 1
 
 
-def test_resolve_document_type_config_skips_missing_condition_type():
-    """Bad config skips only the source type that cannot resolve a target type."""
-    app = _app({
-        "EPIC_PUBLIC_DOCUMENT_TYPE_MAP": "source-cert:Certificate,source-other:Other Order",
-    })
-
-    with app.app_context(), \
-            patch.object(app.logger, "error") as log_error, \
-            patch("tasks.epic_public_extractor.session_scope") as session_scope:
-        session = session_scope.return_value.__enter__.return_value
-        session.query.return_value.filter.return_value.all.return_value = [
-            DocumentTypeRow(1, "Certificate"),
-        ]
-
-        document_type_id_map, default_document_type_id = EpicPublicExtractor._resolve_document_type_config(object())
-
-    assert document_type_id_map == {"source-cert": 1}
-    assert default_document_type_id is None
-    log_error.assert_called_once()
-
-
-def test_fetch_all_documents_returns_empty_when_no_document_type_resolves():
-    """Documents are not fetched when no target document type can be resolved."""
+def test_fetch_all_documents_returns_empty_when_no_source_types_resolve():
+    """Documents are not fetched when no source type mapping is resolved."""
     app = _app()
 
     with app.app_context(), \
@@ -137,7 +111,6 @@ def test_fetch_all_documents_returns_empty_when_no_document_type_resolves():
             patch.object(EpicPublicService, "_fetch_documents_by_type") as fetch_documents:
         documents = EpicPublicService.fetch_all_documents(
             document_type_id_map={},
-            default_document_type_id=None,
         )
 
     assert documents == []

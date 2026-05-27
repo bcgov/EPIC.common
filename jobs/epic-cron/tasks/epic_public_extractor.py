@@ -25,11 +25,10 @@ class EpicPublicExtractor:
 
         target_session = init_conditions_db(current_app)
 
-        source_type_to_document_type_id, default_document_type_id = cls._resolve_document_type_config(target_session)
+        source_type_to_document_type_id = cls._resolve_document_type_config(target_session)
 
         documents = EpicPublicService.fetch_all_documents(
             document_type_id_map=source_type_to_document_type_id,
-            default_document_type_id=default_document_type_id,
         )
         current_app.logger.info(f"Fetched {len(documents)} documents from EPIC Public.")
         cls._sync_documents(documents, target_session)
@@ -40,32 +39,21 @@ class EpicPublicExtractor:
     def _resolve_document_type_config(cls, target_session):
         """Resolve configured Condition document type names to database IDs once per run."""
         source_type_to_target_name = EpicPublicService.get_document_type_name_map()
-        target_type_names = (
-            list(source_type_to_target_name.values())
-            or [EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME]
+        target_type_names = list(source_type_to_target_name.values())
+        target_name_to_id = cls._get_document_type_ids_by_name(
+            target_session,
+            target_type_names,
         )
-        target_name_to_id = cls._get_document_type_ids_by_name(target_session, target_type_names)
-
-        if not source_type_to_target_name:
-            return {}, target_name_to_id.get(EpicPublicService.DEFAULT_DOCUMENT_TYPE_NAME)
-
-        source_type_to_target_id = {}
-        for source_type_id, target_name in source_type_to_target_name.items():
-            target_id = target_name_to_id.get(target_name)
-            if target_id is None:
-                current_app.logger.error(
-                    "Skipping EPIC Public source type %s because %s was not found in condition.document_types.",
-                    source_type_id,
-                    target_name,
-                )
-                continue
-            source_type_to_target_id[source_type_id] = target_id
+        source_type_to_target_id = {
+            source_type_id: target_name_to_id[target_name]
+            for source_type_id, target_name in source_type_to_target_name.items()
+        }
 
         current_app.logger.info(
             "Resolved EPIC Public target document types: mapped_type_count=%s",
             len(source_type_to_target_id),
         )
-        return source_type_to_target_id, None
+        return source_type_to_target_id
 
     @classmethod
     def _get_document_type_ids_by_name(cls, target_session, document_type_names):
