@@ -17,8 +17,7 @@ from typing import List
 
 from flask import current_app
 from epic_cron.data_classes.email_details import EmailDetails
-from submit_api.exceptions import BadRequestError
-
+from epic_cron.exceptions import BadRequestError
 from epic_cron.repositories.access_request_repository import (
     AccessRequestRepository,
     PendingAccessRequest,

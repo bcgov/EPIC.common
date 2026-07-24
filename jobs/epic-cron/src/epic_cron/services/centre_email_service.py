@@ -2,8 +2,7 @@ from typing import Callable, Dict
 
 from flask import current_app
 from epic_cron.data_classes.email_details import EmailDetails
-from submit_api.exceptions import BadRequestError
-
+from epic_cron.exceptions import BadRequestError
 from epic_cron.models.email_job import EmailJob
 from epic_cron.repositories.email_repository import EmailRepository
 from epic_cron.services.ches_service import ChesApiService
@@ -11,7 +10,7 @@ from epic_cron.services.template_renderer import TemplateRenderer
 
 
 class CentreEmailService:
-    """Email service for Centre system, decoupled from submit_api models."""
+    """Email service for Centre system, decoupled from application ORM models."""
 
     _processors: Dict[str, Callable[[EmailJob], EmailDetails]] = {}
 
