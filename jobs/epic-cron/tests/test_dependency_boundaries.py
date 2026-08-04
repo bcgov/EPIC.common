@@ -24,6 +24,13 @@ SUBMIT_SYNC_FILES = [
     "src/epic_cron/services/approved_condition_sync_service.py",
 ]
 
+SUBMIT_MAILER_FILES = [
+    "tasks/submit_mail.py",
+    "src/epic_cron/processors/submit/__init__.py",
+    "src/epic_cron/repositories/email_repository.py",
+    "src/epic_cron/services/mail_service.py",
+]
+
 
 def _python_files():
     project_root = Path(__file__).resolve().parents[1]
@@ -67,6 +74,28 @@ def test_submit_sync_paths_do_not_import_submit_packages():
 
     for relative_path in SUBMIT_SYNC_FILES:
         path = project_root / relative_path
+        violations.extend(_find_forbidden_imports(path, {"submit_api", "submit_cron"}))
+
+    assert violations == []
+
+
+def test_submit_mailer_paths_do_not_import_submit_packages():
+    """Submit mailer should process queued payloads instead of importing Submit models."""
+    project_root = Path(__file__).resolve().parents[1]
+    violations = []
+
+    for relative_path in SUBMIT_MAILER_FILES:
+        path = project_root / relative_path
+        violations.extend(_find_forbidden_imports(path, {"submit_api", "submit_cron"}))
+
+    assert violations == []
+
+
+def test_cron_does_not_import_submit_packages():
+    """epic-cron should not depend on EPIC.submit application packages."""
+    violations = []
+
+    for path in _python_files():
         violations.extend(_find_forbidden_imports(path, {"submit_api", "submit_cron"}))
 
     assert violations == []

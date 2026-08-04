@@ -9,18 +9,17 @@ from epic_cron.models.email_job import EmailJob
 
 metadata = MetaData()
 
-# Local definition of the table (decoupled from submit_api.models)
+# Local definition of the queue table, decoupled from application ORM models.
 email_queue_table = Table(
     "email_queue",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("template_name", String(255), nullable=False),
     Column("status", String(32), nullable=False, server_default="PENDING"),
-    Column("payload", JSONB, nullable=False),  # everything template-specific lives here
+    Column("payload", JSONB, nullable=True),  # everything template-specific lives here
     Column("error_message", Text, nullable=True),
     Column("sent_at", DateTime(timezone=True), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
 )
 
 
@@ -44,7 +43,6 @@ class EmailRepository:
                 error_message=row.error_message,
                 sent_at=row.sent_at,
                 created_at=row.created_at,
-                updated_at=row.updated_at,
             )
             for row in rows
         ]
@@ -53,7 +51,7 @@ class EmailRepository:
         stmt = (
             email_queue_table.update()
             .where(email_queue_table.c.id == email_id)
-            .values(status="SENT", error_message=None, payload=None, sent_at=func.now())
+            .values(status="SENT", error_message=None, sent_at=func.now())
         )
         self.session.execute(stmt)
         self.session.commit()

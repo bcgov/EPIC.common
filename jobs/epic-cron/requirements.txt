@@ -58,5 +58,4 @@ tenacity==9.0.0
 typing_extensions==4.15.0
 urllib3==2.6.3
 Werkzeug==3.1.8
--e git+https://github.com/bcgov/EPIC.submit.git@develop#egg=submit-api&subdirectory=submit-api
 #-e git+https://github.com/bcgov/EPIC.track.git@develop#egg=api&subdirectory=epictrack-api
