@@ -53,13 +53,13 @@
 <body>
   <div class="container">
     <div class="logo">
-      <img src={{ logo_url }} alt="EAO Logo"/>
+      <img src="{{ logo_url }}" alt="EAO Logo"/>
     </div>
 
     <div class="content">
       <p>Hello {{ submitter_name }},</p>
 
-      <p>Thank you for your submission on behalf of <strong>{{ certificate_holder_name }}</strong> through our new submission tool. We have successfully received your submission, and the details are as follows:</p>
+      <p>Thank you for your submission on behalf of <strong>{{ certificate_holder_name }}</strong> through our submission tool. We have received your submission, and the details are as follows:</p>
 
       <div class="grey-box">
         <p><strong>Submission Name:</strong> {{ package_name }}</p>
@@ -72,15 +72,17 @@
         </ul>
       </div>
 
-      <p>If you have any questions or require further assistance, please don’t hesitate to contact us by responding to this email.</p>
-
       <p>Best regards,</p>
 
       <p>
-        <strong>EAO Management Plan Operations Team</strong><br>
+        <strong>EAO Digital Services Team</strong><br>
         B.C. Environmental Assessment Office<br>
         Government of British Columbia
       </p>
+
+      <div class="footer">
+        <p>This is an automated message from EPIC.submit. Please do not reply to this email. If you have any questions, get in touch with your EAO contact for this project.</p>
+      </div>
     </div>
   </div>
 </body>

@@ -49,33 +49,37 @@
       margin-top: 30px;
       text-align: left;
     }
+    .footer p {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo">
-          <img src="{{ logo_url }}" alt="EAO Logo"/>
+      <img src="{{ logo_url }}" alt="EAO Logo"/>
     </div>
 
     <div class="content">
       <p>Hello {{ submitter_name }},</p>
 
-      <p>You have a request regarding your submission of <strong>{{ package_name }}</strong>.</p>
+      <p>The EAO has requested an update to your submission of <strong>{{ package_name }}</strong>.</p>
 
       <div class="highlight-box">
         <p>Please log in to the <a href="{{ epic_submit_link }}" class="cta-link">EPIC.submit</a> application at your earliest convenience to review the details and make the necessary updates.</p>
       </div>
 
-      <p>If you have any questions, feel free to reply to this email.</p>
-
-      <p>Thank you for your prompt attention to this matter.</p>
-      
       <p>Best regards,</p>
+
       <p>
-        <strong>EAO Management Plan Operations Team</strong><br>
+        <strong>EAO Digital Services Team</strong><br>
         B.C. Environmental Assessment Office<br>
         Government of British Columbia
       </p>
+
+      <div class="footer">
+        <p>This is an automated message from EPIC.submit. Please do not reply to this email. If you have any questions, get in touch with your EAO contact for this project.</p>
+      </div>
     </div>
   </div>
 </body>
