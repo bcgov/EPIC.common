@@ -59,9 +59,7 @@
 </head>
 <body>
   <div class="container">
-    <div class="logo">
-      <img src="{{ logo_url }}" alt="EAO Logo"/>
-    </div>
+    {% include "submit/shared/_header.html" %}
 
     <div class="content">
       <p>Hello,</p>
@@ -78,15 +76,8 @@
 
       <p>Thank you,</p>
 
-      <p>
-        <strong>EAO Digital Services Team</strong><br>
-        B.C. Environmental Assessment Office<br>
-        Government of British Columbia
-      </p>
-
-      <div class="footer">
-        <p>This is an automated message from EPIC.submit. Please do not reply to this email. If you have any questions, get in touch with your EAO contact for this project.</p>
-      </div>
+      {% include "submit/shared/_signature.html" %}
+      {% include "submit/shared/_footer_proponent.html" %}
     </div>
   </div>
 </body>
