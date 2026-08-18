@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Management Plan Submission Received</title>
+  <title>Acknowledgement of Receipt</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -48,6 +48,9 @@
       margin-top: 30px;
       text-align: left;
     }
+    .footer p {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -57,7 +60,7 @@
     <div class="content">
       <p>Hello {{ submitter_name }},</p>
 
-      <p>Thank you for your submission on behalf of <strong>{{ certificate_holder_name }}</strong> through our submission tool. We have received your submission. The details are as follows:</p>
+      <p>The EAO has acknowledged receipt of your submission on behalf of <strong>{{ certificate_holder_name }}</strong>. The details are as follows:</p>
 
       <div class="grey-box">
         <p><strong>Submission Name:</strong> {{ package_name }}</p>
@@ -69,6 +72,8 @@
           {% endfor %}
         </ul>
       </div>
+
+      <p>Acknowledging receipt confirms the EAO has your documents. It is not a decision on your submission.</p>
 
       <p>Best regards,</p>
 

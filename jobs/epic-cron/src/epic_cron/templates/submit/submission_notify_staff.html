@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Document Submission</title>
+    <title>New Submission in EPIC.submit</title>
     <style>
         body {
           font-family: Arial, sans-serif;
@@ -53,31 +53,29 @@
           margin-top: 30px;
           text-align: left;
         }
+        .footer p {
+          margin: 0;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo">
-        <img src={{ logo_url }} alt="EAO Logo"/>
-    </div>
+    {% include "submit/shared/_header.html" %}
 
     <div class="content">
         <p>Hello,</p>
 
-        <p>We want to inform you that <strong>{{ certificate_holder_name }}</strong> submitted <strong>{{ package_name
-            }}</strong> for <strong>{{ project_name }}</strong> on <strong>{{ submission_date }}</strong> .</p>
+        <p><strong>{{ certificate_holder_name }}</strong> submitted <strong>{{ package_name }}</strong> for
+            <strong>{{ project_name }}</strong> on <strong>{{ submission_date }}</strong>.</p>
 
         <div class="grey-box">
-            <p>Log in to <a href="https://submit.eao.gov.bc.ca">EPIC.submit</a> to view the submission package.</p>
+            <p>Log in to <a href="{{ epic_submit_link }}">EPIC.submit</a> to view the submission package.</p>
         </div>
 
         <p>Best regards,</p>
 
-        <p>
-            <strong>EAO Management Plan Operations Team</strong><br>
-            B.C. Environmental Assessment Office<br>
-            Government of British Columbia
-        </p>
+        {% include "submit/shared/_signature.html" %}
+        {% include "submit/shared/_footer_staff.html" %}
     </div>
 </div>
 </body>

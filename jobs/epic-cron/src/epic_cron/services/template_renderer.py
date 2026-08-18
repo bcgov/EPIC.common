@@ -50,6 +50,7 @@ class TemplateRenderer:
         """Return a transport-ready email with rendered HTML body."""
         body_args = dict(email_details.body_args or {})
         body_args["logo_url"] = f"{web_url}/assets/EAO_Logo-BZOR9oRj.png"
+        body_args.setdefault("epic_submit_link", web_url)
         rendered_body = cls.render(email_details.template_name, body_args, domain)
 
         if environment and environment.lower() != "production":

@@ -52,13 +52,14 @@
       margin-top: 30px;
       text-align: left;
     }
+    .footer p {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">
-      <img src={{ logo_url }} alt="EAO Logo"/>
-    </div>
+    {% include "submit/shared/_header.html" %}
 
     <div class="content">
       <p>Hello,</p>
@@ -75,12 +76,9 @@
 
       <p>Thank you,</p>
 
-      <p>
-        <strong>EAO Management Plan Operations Team</strong><br>
-        B.C. Environmental Assessment Office<br>
-        Government of British Columbia
-      </p>
+      {% include "submit/shared/_signature.html" %}
+      {% include "submit/shared/_footer_proponent.html" %}
     </div>
   </div>
 </body>
-</html> 
+</html>

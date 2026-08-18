@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Invitation to collaborate on EPIC.submit</title>
+  <title>Confirmation of Withdrawal - {{ package_name }}</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -49,37 +49,30 @@
       margin-top: 30px;
       text-align: left;
     }
+    .footer p {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">
-      <img src="{{ logo_url }}" alt="EAO Logo" />
-    </div>
+    {% include "submit/shared/_header.html" %}
 
     <div class="content">
-      <p>You have been invited to <strong>{{ invitation_action_text }} {{ project_name }} </strong> on EPIC.submit.</p>
+      <p>Hello,</p>
 
-      <p>Click the link below and sign in with your <strong>Business BCeID</strong> or <strong>BC Services Card</strong> to access the project.</p>
+      <p>Your submission of <strong>{{ package_name }}</strong> has been withdrawn in EPIC.submit, and the EAO's review of it has been cancelled.</p>
+
+      <p>A new submission package has been created so you can make changes and resubmit.</p>
 
       <div class="highlight-box">
-        <a href="{{ invitation_url }}" class="cta-link">Join EPIC.submit</a>
+        <a href="{{ submission_link }}" class="cta-link">Access your submission in EPIC.submit</a>
       </div>
 
-      <p>
-      If you don’t have a Business BCeID associated with this project, please contact the person in charge of the Business BCeID account for <strong>{{ certificate_holder_name }}</strong>.
-      </p>
-
-      <p>
-       For more information on how to use or set up a BC Services Card account, visit <a href="{{ bc_service_card_url }}">{{ bc_service_card_url }}</a>.
-      </p>
-
       <p>Thank you,</p>
-      <p>
-       <strong>EAO Management Plan Operations Team</strong><br />
-        B.C. Environmental Assessment Office<br />
-        Government of British Columbia
-      </p>
+
+      {% include "submit/shared/_signature.html" %}
+      {% include "submit/shared/_footer_proponent.html" %}
     </div>
   </div>
 </body>
