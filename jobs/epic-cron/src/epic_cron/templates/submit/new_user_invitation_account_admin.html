@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invitation to join EPIC.submit as a Regulated Party Account Administrator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #003366;
+      background-color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      max-width: 220px;
+      height: auto;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+      text-align: left;
+    }
+    .highlight-box {
+      background-color: #FAF9F8;
+      padding: 16px;
+      border-left: 4px solid #1a5a96;
+      margin: 20px 0;
+    }
+    .cta-link {
+      color: #1a5a96;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .cta-link:hover {
+      text-decoration: underline;
+    }
+    .role-heading {
+      margin-bottom: 4px;
+    }
+    .role-list {
+      margin: 0 0 16px 0;
+      padding-left: 20px;
+    }
+    .role-list li {
+      margin-bottom: 8px;
+    }
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 30px;
+      text-align: left;
+    }
+    .footer p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% include "submit/shared/_header.html" %}
+
+    <div class="content">
+      <p>You have been invited to join <strong>{{ certificate_holder_name }}</strong> on EPIC.submit as a <strong>Regulated Party Account Administrator</strong>.</p>
+
+      <p class="role-heading"><strong>What this role gives you</strong></p>
+
+      <p>You have full access to everything in the {{ certificate_holder_name }} account, including every project that interacts with the EAO. You can:</p>
+
+      <ul class="role-list">
+        <li>Create submission packages and submit them to the EAO, for any project</li>
+        <li>Manage users across all projects, including assigning other Regulated Party Account Administrators, assigning Project Administrators, and adding collaborators to all or specific submissions</li>
+      </ul>
+
+      <p>Click the link below and sign in with your <strong>Business BCeID</strong> or <strong>BC Services Card</strong> to access the account.</p>
+
+      <div class="highlight-box">
+        <a href="{{ invitation_url }}" class="cta-link">Join EPIC.submit</a>
+      </div>
+
+      <p>
+        If you don't have a Business BCeID associated with <strong>{{ certificate_holder_name }}</strong>, please contact the person in charge of the Business BCeID account.
+      </p>
+
+      <p>
+        For more information on how to use or set up a BC Services Card account, visit <a href="{{ bc_service_card_url }}">{{ bc_service_card_url }}</a>.
+      </p>
+
+      <p>Thank you,</p>
+
+      {% include "submit/shared/_signature.html" %}
+
+      <div class="footer">
+        <p>This is an automated message from EPIC.submit. Please do not reply to this email. If you have any questions, contact the person who invited you.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

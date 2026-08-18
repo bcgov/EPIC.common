@@ -9,6 +9,9 @@ from epic_cron.models.email_job import EmailJob
 MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE = 'management_plan_submission_verification.html'
 MANAGEMENT_PLAN_UPDATE_REQUEST_CREATED_EMAIL_TEMPLATE = 'management_plan_update_request_created.html'
 NEW_USER_INVITATION_EMAIL_TEMPLATE = 'new_user_invitation.html'
+NEW_USER_INVITATION_ACCOUNT_ADMIN_EMAIL_TEMPLATE = 'new_user_invitation_account_admin.html'
+NEW_USER_INVITATION_PROJECT_ADMIN_EMAIL_TEMPLATE = 'new_user_invitation_project_admin.html'
+NEW_USER_INVITATION_COLLABORATOR_EMAIL_TEMPLATE = 'new_user_invitation_collaborator.html'
 MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE = 'management_plan_submission_notify_staff.html'
 SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE = 'submission_awaiting_manager_approval.html'
 MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE = 'resubmission_request.html'
@@ -44,6 +47,9 @@ PROCESSORS: Dict[str, Callable[[EmailJob], EmailDetails]] = {
     MANAGEMENT_PLAN_SUBMISSION_CONFIRMATION_EMAIL_TEMPLATE: process_submit_email,
     MANAGEMENT_PLAN_UPDATE_REQUEST_CREATED_EMAIL_TEMPLATE: process_submit_email,
     NEW_USER_INVITATION_EMAIL_TEMPLATE: process_submit_email,
+    NEW_USER_INVITATION_ACCOUNT_ADMIN_EMAIL_TEMPLATE: process_submit_email,
+    NEW_USER_INVITATION_PROJECT_ADMIN_EMAIL_TEMPLATE: process_submit_email,
+    NEW_USER_INVITATION_COLLABORATOR_EMAIL_TEMPLATE: process_submit_email,
     MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE: process_submit_email,
     SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE: process_submit_email,
     MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE: process_submit_email,
