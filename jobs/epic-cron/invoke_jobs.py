@@ -178,7 +178,8 @@ if __name__ == "__main__":
     if not args:
         logger.error(
             "You must provide a job type: "
-            "SUBMIT/COMPLIANCE/EMAIL/SYNC_CONDITION/SCAN_VIRUS/EXTRACT_WORK/EXTRACT_PHASE/CHECK_SSL"
+            "SUBMIT/COMPLIANCE/EMAIL/SYNC_CONDITION/PENDING_ACCESS_REMINDER/"
+            "SCAN_VIRUS/EXTRACT_WORK/EXTRACT_PHASE/CHECK_SSL"
         )
         sys.exit(1)
 
@@ -194,6 +195,9 @@ if __name__ == "__main__":
 
     elif job_type == "SYNC_STAFF_WORK_ROLE":
         run("SYNC_STAFF_WORK_ROLE")
+
+    elif job_type == "PENDING_ACCESS_REMINDER":
+        run("PENDING_ACCESS_REMINDER")
 
     elif job_type == "EXTRACT_WORK":
         try:
