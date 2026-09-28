@@ -153,6 +153,21 @@
                 "FLASK_ENV": "development",
                 "PYTHONPATH": "${workspaceFolder}/jobs/epic-cron/src"
             }
+        },
+        {
+            "name": "EPIC CRON - Deactivate Inactive Users",
+            "type": "debugpy",
+            "cwd": "${workspaceFolder}/jobs/epic-cron",
+            "request": "launch",
+            "program": "invoke_jobs.py",
+            "args": ["DEACTIVATE_INACTIVE_USERS"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/jobs/epic-cron/.env",
+            "env": {
+                "FLASK_ENV": "development",
+                "PYTHONPATH": "${workspaceFolder}/jobs/epic-cron/src"
+            }
         }
     ]
 }

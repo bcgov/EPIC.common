@@ -11,4 +11,6 @@
 0 17 * * 1-5 default cd /epic-cron && ./run_approved_condition.sh
 # SYNC STAFF WORK ROLE - Runs daily at midnight
 0 0 * * * default cd /epic-cron && ./run_staff_work_role_sync.sh
+# DEACTIVATE INACTIVE USERS - Runs daily overnight (07:00 UTC ~ midnight Pacific)
+0 7 * * * default cd /epic-cron && ./run_deactivate_inactive_users.sh
 # An empty line is required at the end of this file for a valid cron file
