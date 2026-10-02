@@ -41,3 +41,40 @@ class SubmitProponentV2(Base):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=True,
     )
+
+
+# Submit v2 user type values (users.type) stored as an enum column.
+USER_TYPE_PROPONENT = "PROPONENT"
+USER_TYPE_STAFF = "STAFF"
+
+# Submit v2 user status ids (user_status.id) referenced by users.status_id.
+USER_STATUS_ACTIVE = 1
+USER_STATUS_INACTIVE = 2
+USER_STATUS_ACCESS_REVOKED = 3
+
+
+class SubmitUserV2(Base):
+    """Submit v2 user mapping (users table).
+
+    Only the columns required by inactivity deactivation are mapped here.
+    """
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    auth_guid = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    status_id = Column(Integer, nullable=False, default=USER_STATUS_ACTIVE)
+
+
+class SubmitAccountUserV2(Base):
+    """Submit v2 account user mapping (account_users table).
+
+    Holds the ``last_login_at`` timestamp used to detect proponent inactivity.
+    """
+
+    __tablename__ = "account_users"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)

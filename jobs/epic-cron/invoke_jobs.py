@@ -22,6 +22,7 @@ from tasks.sync_staff_work_role import SyncStaffWorkRole
 from tasks.work_extractor import WorkExtractor
 from tasks.phase_extractor import PhaseExtractor
 from tasks.epic_public_extractor import EpicPublicExtractor
+from tasks.deactivate_inactive_users import DeactivateInactiveUsers
 
 SUBMIT_SCHEMA_V1 = "v1"
 SUBMIT_SCHEMA_V2 = "v2"
@@ -132,6 +133,10 @@ def run(
             application.logger.info(f'Starting Staff Work Role Sync At {datetime.now()}')
             SyncStaffWorkRole.sync_staff_work_roles()
             application.logger.info('Completed Staff Work Role Sync')
+        elif job_name == 'DEACTIVATE_INACTIVE_USERS':
+            application.logger.info(f'Starting Deactivate Inactive Users At {datetime.now()}')
+            DeactivateInactiveUsers.deactivate_inactive_users()
+            application.logger.info('Completed Deactivate Inactive Users')
         elif job_name == 'PENDING_ACCESS_REMINDER':
             from tasks.pending_access_reminder import PendingAccessReminder
             PendingAccessReminder.run()
@@ -195,6 +200,9 @@ if __name__ == "__main__":
 
     elif job_type == "SYNC_STAFF_WORK_ROLE":
         run("SYNC_STAFF_WORK_ROLE")
+
+    elif job_type == "DEACTIVATE_INACTIVE_USERS":
+        run("DEACTIVATE_INACTIVE_USERS")
 
     elif job_type == "PENDING_ACCESS_REMINDER":
         run("PENDING_ACCESS_REMINDER")
