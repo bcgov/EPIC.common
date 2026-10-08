@@ -23,6 +23,7 @@ from tasks.work_extractor import WorkExtractor
 from tasks.phase_extractor import PhaseExtractor
 from tasks.epic_public_extractor import EpicPublicExtractor
 from tasks.deactivate_inactive_users import DeactivateInactiveUsers
+from tasks.submit_virus_scan import SubmitVirusScan
 
 SUBMIT_SCHEMA_V1 = "v1"
 SUBMIT_SCHEMA_V2 = "v2"
@@ -120,6 +121,11 @@ def run(
             VirusScanner.scan_file_from_path(file_path)
             application.logger.info(f'Completed Virus Scan for {file_path}')
 
+        elif job_name == 'SCAN_SUBMIT_DOCUMENTS':
+            application.logger.info(f'Starting Submit document security scan at {datetime.now()}')
+            SubmitVirusScan.run()
+            application.logger.info('Completed Submit document security scan')
+
         elif job_name == 'EMAIL':
             application.logger.info(f'Starting Email Sending At {datetime.now()}')
             email_sender(target_system)
@@ -184,7 +190,7 @@ if __name__ == "__main__":
         logger.error(
             "You must provide a job type: "
             "SUBMIT/COMPLIANCE/EMAIL/SYNC_CONDITION/PENDING_ACCESS_REMINDER/"
-            "SCAN_VIRUS/EXTRACT_WORK/EXTRACT_PHASE/CHECK_SSL"
+            "SCAN_VIRUS/SCAN_SUBMIT_DOCUMENTS/EXTRACT_WORK/EXTRACT_PHASE/CHECK_SSL"
         )
         sys.exit(1)
 
@@ -235,6 +241,9 @@ if __name__ == "__main__":
         file_path = args[1]
         run("SCAN_VIRUS", target_system=None, file_path=file_path)
 
+    elif job_type == "SCAN_SUBMIT_DOCUMENTS":
+        run("SCAN_SUBMIT_DOCUMENTS")
+
     else:
         # Assume EXTRACT_PROJECT with target_system
         try:
@@ -242,7 +251,8 @@ if __name__ == "__main__":
         except ValueError:
             logger.error(
                 f"Invalid job type '{job_type}'. Must be one of: "
-                "SUBMIT, COMPLIANCE, EMAIL, SYNC_CONDITION, SCAN_VIRUS, EXTRACT_WORK, EXTRACT_PHASE, CHECK_SSL"
+                "SUBMIT, COMPLIANCE, EMAIL, SYNC_CONDITION, SCAN_VIRUS, SCAN_SUBMIT_DOCUMENTS, "
+                "EXTRACT_WORK, EXTRACT_PHASE, CHECK_SSL"
             )
             sys.exit(1)
 

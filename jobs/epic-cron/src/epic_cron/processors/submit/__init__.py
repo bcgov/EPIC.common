@@ -16,6 +16,7 @@ SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE = 'submission_awaiting_manag
 MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE = 'management_plan_resubmission_request.html'
 SUBMISSION_WITHDRAWN_CONFIRMATION_EMAIL_TEMPLATE = 'submission_withdrawn_confirmation.html'
 SUBMISSION_ACKNOWLEDGED_CONFIRMATION_EMAIL_TEMPLATE = 'submission_acknowledgement.html'
+DOCUMENT_SECURITY_REJECTED_EMAIL_TEMPLATE = 'document_security_rejected.html'
 
 
 def process_submit_email(job: EmailJob) -> EmailDetails:
@@ -55,4 +56,5 @@ PROCESSORS: Dict[str, Callable[[EmailJob], EmailDetails]] = {
     MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE: process_submit_email,
     SUBMISSION_WITHDRAWN_CONFIRMATION_EMAIL_TEMPLATE: process_submit_email,
     SUBMISSION_ACKNOWLEDGED_CONFIRMATION_EMAIL_TEMPLATE: process_submit_email,
+    DOCUMENT_SECURITY_REJECTED_EMAIL_TEMPLATE: process_submit_email,
 }

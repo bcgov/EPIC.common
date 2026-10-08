@@ -5,6 +5,8 @@
 0 5 * * * default cd /epic-cron && ./run_epic_public_extractor.sh
 # SUBMIT EMAILER - Runs every 5 minutes
 */5 * * * * default cd /epic-cron && ./run_emailer.sh
+# SUBMIT DOCUMENT SECURITY SCAN - Runs every 5 minutes
+*/5 * * * * default cd /epic-cron && ./run_submit_virus_scan.sh
 # CENTRE EMAILER - Runs every 5 minutes
 */5 * * * * default cd /epic-cron && ./run_centre_emailer.sh
 # SYNC APPROVED CONDITION - Runs at 5pm on weekdays

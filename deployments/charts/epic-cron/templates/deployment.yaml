@@ -183,6 +183,31 @@ spec:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
                   key: SIGNUP_URL_PATH
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}
+                  key: S3_ACCESS_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.name }}
+                  key: S3_SECRET_ACCESS_KEY
+            - name: S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.name }}-config
+                  key: S3_BUCKET
+            - name: S3_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.name }}-config
+                  key: S3_HOST
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.name }}-config
+                  key: S3_REGION
 
             - name: KEYCLOAK_BASE_URL
               valueFrom:

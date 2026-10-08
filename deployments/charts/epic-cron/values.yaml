@@ -16,6 +16,7 @@ cronTab: |
   0 1 * * * default cd /epic-cron && ./run_project_cron_submit.sh
   0 3 * * * default cd /epic-cron && ./run_project_cron_compliance.sh
   */6 * * * * default cd /epic-cron && ./run_emailer.sh
+  */5 * * * * default cd /epic-cron && ./run_submit_virus_scan.sh
   */4 * * * * default cd /epic-cron && ./run_centre_emailer.sh
   10 * * * * default cd /epic-cron && ./run_approved_condition.sh
 
@@ -87,6 +88,11 @@ CLAMAV:
   host: "142.34.194.68"
   port: "16504"
 
+S3:
+  host: "nrs.objectstore.gov.bc.ca"
+  bucket: "dev-epic"
+  region: "ca-central-1"
+
 secrets:
   trackDbUsername: "app"
   trackDbPassword: ""
@@ -105,3 +111,5 @@ secrets:
   conditionDbName: "app"
   serviceAccountId: "submit-api-condition-client"
   serviceAccountSecret: ""
+  s3AccessKeyId: ""
+  s3SecretAccessKey: ""
