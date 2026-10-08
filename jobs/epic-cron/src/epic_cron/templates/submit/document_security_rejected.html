@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>File rejected by security check</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #ffffff; padding: 20px; }
+    .container { max-width: 600px; margin: auto; padding: 20px; }
+    .logo { margin-bottom: 20px; }
+    .logo img { max-width: 220px; height: auto; }
+    .content { color: #333333; font-size: 16px; line-height: 1.6; }
+    .footer { color: #666666; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% include "submit/shared/_header.html" %}
+    <div class="content">
+      <p>Hello,</p>
+      <p>
+        The file <strong>{{ file_name }}</strong> in <strong>{{ package_name }}</strong>
+        was rejected by a security check and is no longer available in EPIC.submit.
+      </p>
+      <p>Please contact your EAO project contact for help resubmitting the file.</p>
+      <p>Thank you,</p>
+      {% include "submit/shared/_signature.html" %}
+      {% include "submit/shared/_footer_proponent.html" %}
+    </div>
+  </div>
+</body>
+</html>

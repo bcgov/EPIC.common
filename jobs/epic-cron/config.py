@@ -125,6 +125,13 @@ class _Config():  # pylint: disable=too-few-public-methods
     CLAMAV_HOST = os.getenv('CLAMAV_HOST')
     CLAMAV_PORT = os.getenv('CLAMAV_PORT')
 
+    # Submit document storage
+    S3_ACCESS_KEY_ID = os.getenv('S3_ACCESS_KEY_ID')
+    S3_SECRET_ACCESS_KEY = os.getenv('S3_SECRET_ACCESS_KEY')
+    S3_BUCKET = os.getenv('S3_BUCKET')
+    S3_HOST = os.getenv('S3_HOST')
+    S3_REGION = os.getenv('S3_REGION', 'ca-central-1')
+
     # CHES Configuration for Email Service
     CHES_TOKEN_ENDPOINT = os.getenv('CHES_TOKEN_ENDPOINT')
     CHES_CLIENT_ID = os.getenv('CHES_CLIENT_ID')

@@ -50,6 +50,10 @@ data:
   # ClamAV configuration
   CLAMAV_HOST: "{{ .Values.CLAMAV.host }}"
   CLAMAV_PORT: "{{ .Values.CLAMAV.port }}"
+  # Submit document storage
+  S3_BUCKET: "{{ .Values.S3.bucket }}"
+  S3_HOST: "{{ .Values.S3.host }}"
+  S3_REGION: "{{ .Values.S3.region }}"
   # Other configuration
   CONNECT_TIMEOUT: "60"
   ENVIRONMENT: "{{ .Values.environment }}"
