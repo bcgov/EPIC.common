@@ -1,87 +1,103 @@
-# Accessing ClamAV service from silver
+# ClamAV Installation on OpenShift
 
-Full installation of ClamAv demands a lot of resources.so the approach is to access the clamav in silver cluster and set up the connectivity using TSC
----
+This guide installs ClamAV in the same OpenShift namespace as the application. Pods in the namespace can connect to it through the `clamav-gold` Kubernetes Service.
 
-## Step 1: Apply the TSC to the Namespace
+## Prerequisites
 
-Create your tsc  file [tsc_clamav_service.yaml](../deployments/tsc_clamav_service.yaml)
-```bash
-oc apply -f tsc.yaml -n namespace
-```
+Install `oc`, `helm`, and `git`, then log in to the BC Gov OpenShift Silver cluster.
 
----
-
-## Step 2: Check the TSC and TransportServer
-
-List your TransportServerClaims to verify it's working:
+Select the target namespace:
 
 ```bash
-oc get tscs -n namespace
+oc project c72cba-test
 ```
 
-Then, get the assigned host and port from the generated TransportServer:
+## Install ClamAV
+
+Clone the common ClamAV chart:
 
 ```bash
-oc get ts -n namespace
+git clone https://github.com/bcgov/common-hosted-clamav-service.git
+cd common-hosted-clamav-service
 ```
 
-Look for:
+Create `clamav-gold-values.yaml`:
 
-- Virtual Server Address (e.g., `142.34.194.68`)
-- Virtual Server Port (e.g., `16504`)
+```yaml
+global:
+  imagePullSecrets: []
 
----
+fullnameOverride: clamav-gold
+replicaCount: 1
 
-## Step 3: Test Connectivity from Inside a Pod
+service:
+  type: ClusterIP
+  port: 3310
 
-Run this from any OpenShift pod (e.g., debug pod):
+resources:
+  requests:
+    cpu: 300m
+    memory: 2Gi
+  limits:
+    cpu: 1000m
+    memory: 3Gi
+
+persistentVolume:
+  enabled: true
+  size: 2Gi
+  storageClass: netapp-block-standard
+
+hpa:
+  enabled: false
+```
+
+Install the chart:
 
 ```bash
-timeout 5 bash -c ">/dev/tcp/<VIRTUALSERVERADDRESS>/<VIRTUALSERVERPORT>"; echo $?
+helm upgrade --install clamav-gold ./helm/_clamav \
+  --namespace c72cba-test \
+  --values clamav-gold-values.yaml \
+  --wait \
+  --timeout 10m
 ```
 
-Return Codes:
-- 0: Connected
-- 1: Connection refused
-- 124: Timed out
+## Verify the Installation
 
----
-
-If the connection is successful (0 return code), the service is exposed .
-
-## Additional notes:
-
-### Step 4: Test for Virus Positive Case (EICAR)
-
-To simulate a virus detection, create an EICAR test file inside your pod:
+Confirm that the pod is ready and that the Service and persistent volume claim exist:
 
 ```bash
-echo "X5O!P%@AP[4\\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*" > /tmp/eicar.com
+oc -n c72cba-test get pods
+oc -n c72cba-test get service clamav-gold
+oc -n c72cba-test get pvc
 ```
 
-Run the virus scanner job from your Python container:
+The ClamAV pod should report `Running` and `Ready`.
+
+For a quick connectivity check, forward the service port:
 
 ```bash
-python3 invoke_jobs.py SCAN_VIRUS /tmp/eicar.com
+oc -n c72cba-test port-forward service/clamav-gold 3310:3310
 ```
 
-This should trigger a "virus detected" response if ClamAV is correctly connected.
-
----
-
-### Cleanup
-
-To delete your TransportServerClaim:
+Keep that command running and execute this in another terminal:
 
 ```bash
-oc delete tsc clamav-tsc -n 6cdc9e-prod
+printf 'zPING\0' | nc -w 5 127.0.0.1 3310
 ```
 
----
+The expected response is:
 
-## Notes
+```text
+PONG
+```
 
-- The Python service uses `clamd` to stream and scan files using ClamAV.
-- S3 files can also be scanned by passing an `s3://bucket/key` path to the same job.
-- See your `invoke_jobs.py` and `VirusScanner` class for implementation details.
+## Application Configuration
+
+Applications in the same namespace connect through the Kubernetes Service name:
+
+```ini
+CLAMAV_HOST=clamav-gold
+CLAMAV_PORT=3310
+```
+
+Use the corresponding namespace in the commands when installing into development or production.
