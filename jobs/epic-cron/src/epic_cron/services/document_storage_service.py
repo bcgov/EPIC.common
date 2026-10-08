@@ -1,6 +1,7 @@
 """S3 operations used by background security scanning."""
 
 import boto3
+from botocore.exceptions import ClientError
 from flask import current_app
 
 
@@ -37,8 +38,7 @@ class DocumentStorageService:
 
     def quarantine(self, object_key: str) -> str:
         """Rename an infected object in place and return its new key."""
-        folder, separator, filename = object_key.rpartition("/")
-        quarantined_key = f"{folder}{separator}virus_detected_{filename}"
+        quarantined_key = self.quarantined_key(object_key)
         self.client.copy_object(
             Bucket=self.bucket,
             CopySource={"Bucket": self.bucket, "Key": object_key},
@@ -46,3 +46,28 @@ class DocumentStorageService:
         )
         self.client.delete_object(Bucket=self.bucket, Key=object_key)
         return quarantined_key
+
+    def complete_started_quarantine(self, object_key: str) -> str | None:
+        """Finish a quarantine whose S3 copy succeeded on an earlier run."""
+        quarantined_key = self.quarantined_key(object_key)
+        try:
+            self.client.head_object(Bucket=self.bucket, Key=quarantined_key)
+        except ClientError as exc:
+            if self.is_not_found(exc):
+                return None
+            raise
+
+        self.client.delete_object(Bucket=self.bucket, Key=object_key)
+        return quarantined_key
+
+    @staticmethod
+    def is_not_found(error: ClientError) -> bool:
+        """Return whether S3 reports that an object key does not exist."""
+        error_code = error.response.get("Error", {}).get("Code")
+        return error_code in {"404", "NoSuchKey", "NotFound"}
+
+    @staticmethod
+    def quarantined_key(object_key: str) -> str:
+        """Return the deterministic quarantine key in the original folder."""
+        folder, separator, filename = object_key.rpartition("/")
+        return f"{folder}{separator}virus_detected_{filename}"

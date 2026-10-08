@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
+from botocore.exceptions import ClientError
 from flask import current_app
 
 from epic_cron.models.db import init_submit_session, session_scope
@@ -47,7 +48,16 @@ class SubmitVirusScanService:
     @classmethod
     def _scan_document(cls, session_factory, clamav, storage, document):
         try:
-            is_infected, scan_details = clamav.scan_bytes(storage.read_bytes(document["url"]))
+            try:
+                document_bytes = storage.read_bytes(document["url"])
+            except ClientError as exc:
+                if not storage.is_not_found(exc):
+                    raise
+                if cls._recover_quarantine(session_factory, storage, document):
+                    return
+                raise
+
+            is_infected, scan_details = clamav.scan_bytes(document_bytes)
             if is_infected is None:
                 raise RuntimeError(scan_details or "ClamAV returned an unknown result")
 
@@ -59,9 +69,7 @@ class SubmitVirusScanService:
                     return
 
                 quarantined_key = storage.quarantine(document["url"])
-                repository.mark_rejected_and_queue_email(
-                    document, cls._email_payload(document)
-                )
+                repository.mark_rejected_and_queue_email(document, cls._email_payload(document))
                 current_app.logger.warning(
                     "Document rejected by security scan. document_id=%s detection=%s "
                     "quarantined_key=%s",
@@ -74,6 +82,28 @@ class SubmitVirusScanService:
             )
             with session_scope(session_factory) as session:
                 SubmitVirusScanRepository(session).schedule_retry([document["id"]])
+
+    @classmethod
+    def _record_rejection(cls, session_factory, document):
+        """Persist rejection and its notification after quarantine succeeds."""
+        with session_scope(session_factory) as session:
+            SubmitVirusScanRepository(session).mark_rejected_and_queue_email(
+                document, cls._email_payload(document)
+            )
+
+    @classmethod
+    def _recover_quarantine(cls, session_factory, storage, document) -> bool:
+        """Finalize the database update when an earlier S3 quarantine succeeded."""
+        quarantined_key = storage.complete_started_quarantine(document["url"])
+        if not quarantined_key:
+            return False
+
+        cls._record_rejection(session_factory, document)
+        current_app.logger.warning(
+            "Completed an earlier document quarantine. document_id=%s quarantined_key=%s",
+            document["id"], quarantined_key,
+        )
+        return True
 
     @staticmethod
     def _schedule_retries(session_factory, documents):
