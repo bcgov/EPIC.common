@@ -5,7 +5,7 @@ from flask import current_app
 
 
 class DocumentStorageService:
-    """Read and delete Submit documents directly from object storage."""
+    """Read and quarantine Submit documents in object storage."""
 
     def __init__(self):
         config = current_app.config
@@ -35,6 +35,14 @@ class DocumentStorageService:
         with response["Body"] as body:
             return body.read()
 
-    def delete(self, object_key: str):
-        """Remove an infected object from the bucket."""
+    def quarantine(self, object_key: str) -> str:
+        """Rename an infected object in place and return its new key."""
+        folder, separator, filename = object_key.rpartition("/")
+        quarantined_key = f"{folder}{separator}virus_detected_{filename}"
+        self.client.copy_object(
+            Bucket=self.bucket,
+            CopySource={"Bucket": self.bucket, "Key": object_key},
+            Key=quarantined_key,
+        )
         self.client.delete_object(Bucket=self.bucket, Key=object_key)
+        return quarantined_key

@@ -58,13 +58,14 @@ class SubmitVirusScanService:
                     current_app.logger.info("Security scan clean. document_id=%s", document["id"])
                     return
 
-                storage.delete(document["url"])
+                quarantined_key = storage.quarantine(document["url"])
                 repository.mark_rejected_and_queue_email(
                     document, cls._email_payload(document)
                 )
                 current_app.logger.warning(
-                    "Document rejected by security scan. document_id=%s detection=%s",
-                    document["id"], scan_details,
+                    "Document rejected by security scan. document_id=%s detection=%s "
+                    "quarantined_key=%s",
+                    document["id"], scan_details, quarantined_key,
                 )
         except Exception as exc:  # pylint: disable=broad-except
             current_app.logger.exception(
