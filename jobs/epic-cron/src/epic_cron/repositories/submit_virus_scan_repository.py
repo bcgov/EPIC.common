@@ -75,21 +75,29 @@ class SubmitVirusScanRepository:
         limit: int = 100,
     ):
         """Return new documents and failed documents whose retry delay has passed."""
+        uploader_email = (
+            select(account_users.c.work_email_address)
+            .select_from(users.join(account_users, account_users.c.user_id == users.c.id))
+            .where(
+                users.c.auth_guid == submissions.c.created_by,
+                account_users.c.work_email_address.is_not(None),
+            )
+            .limit(1)
+            .scalar_subquery()
+        )
         stmt = (
             select(
                 submitted_documents.c.id,
                 submitted_documents.c.name,
                 submitted_documents.c.url,
                 packages.c.name.label("package_name"),
-                account_users.c.work_email_address.label("recipient"),
+                uploader_email.label("uploader_email"),
             )
             .select_from(
                 submitted_documents
                 .join(submissions, submissions.c.submitted_document_id == submitted_documents.c.id)
                 .join(items, items.c.id == submissions.c.item_id)
                 .join(packages, packages.c.id == items.c.package_id)
-                .outerjoin(users, users.c.auth_guid == submissions.c.created_by)
-                .outerjoin(account_users, account_users.c.user_id == users.c.id)
             )
             .where(
                 or_(
@@ -152,7 +160,7 @@ class SubmitVirusScanRepository:
             )
             .values(virus_scan_result=SCAN_RESULT_REJECTED)
         )
-        if result.rowcount == 1 and document.get("recipient"):
+        if result.rowcount == 1 and payload.get("recipients"):
             self.session.execute(insert(email_queue).values(
                 entity_id=document["id"],
                 entity_type="DOCUMENT",

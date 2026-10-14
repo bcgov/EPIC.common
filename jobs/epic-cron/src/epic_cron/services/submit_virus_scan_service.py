@@ -114,13 +114,16 @@ class SubmitVirusScanService:
 
     @staticmethod
     def _email_payload(document):
+        staff_email = current_app.config.get("STAFF_SUPPORT_MAIL_ID")
         return {
             "sender": current_app.config.get("SENDER_EMAIL"),
-            "recipients": [document["recipient"]] if document.get("recipient") else [],
-            "subject": "Action required: A file in your EPIC.submit submission was rejected",
+            "recipients": [staff_email] if staff_email else [],
+            "subject": "Security check rejected an EPIC.submit file",
             "body_args": {
                 "file_name": document["name"],
                 "package_name": document["package_name"],
+                "document_id": document["id"],
+                "uploader_email": document.get("uploader_email"),
             },
             "cc": [],
             "bcc": [],
