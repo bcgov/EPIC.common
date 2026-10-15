@@ -208,6 +208,11 @@ spec:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
                   key: S3_REGION
+            - name: SUBMIT_VIRUS_SCAN_DELAY_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.name }}-config
+                  key: SUBMIT_VIRUS_SCAN_DELAY_MINUTES
 
             - name: KEYCLOAK_BASE_URL
               valueFrom:

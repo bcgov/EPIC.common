@@ -29,6 +29,7 @@ SUBMIT:
   sender:
     email: "EAO.ManagementPlanSupport.dev@gov.bc.ca"
   staffSupportMailId: "EAO.ManagementPlanSupport@gov.bc.ca"
+  virusScanDelayMinutes: 1
   signupUrlPath: "/proponent/registration"
   api:
     url: "https://submit-api-c72cba-dev.apps.gold.devops.gov.bc.ca"

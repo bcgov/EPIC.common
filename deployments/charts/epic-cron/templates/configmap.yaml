@@ -54,6 +54,7 @@ data:
   S3_BUCKET: "{{ .Values.S3.bucket }}"
   S3_HOST: "{{ .Values.S3.host }}"
   S3_REGION: "{{ .Values.S3.region }}"
+  SUBMIT_VIRUS_SCAN_DELAY_MINUTES: "{{ .Values.SUBMIT.virusScanDelayMinutes }}"
   # Other configuration
   CONNECT_TIMEOUT: "60"
   ENVIRONMENT: "{{ .Values.environment }}"

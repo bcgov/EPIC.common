@@ -131,6 +131,7 @@ class _Config():  # pylint: disable=too-few-public-methods
     S3_BUCKET = os.getenv('S3_BUCKET')
     S3_HOST = os.getenv('S3_HOST')
     S3_REGION = os.getenv('S3_REGION', 'ca-central-1')
+    SUBMIT_VIRUS_SCAN_DELAY_MINUTES = int(os.getenv('SUBMIT_VIRUS_SCAN_DELAY_MINUTES', '1'))
 
     # CHES Configuration for Email Service
     CHES_TOKEN_ENDPOINT = os.getenv('CHES_TOKEN_ENDPOINT')

@@ -14,17 +14,19 @@ from epic_cron.services.document_storage_service import DocumentStorageService
 class SubmitVirusScanService:
     """Scan uploads after a short access window without blocking submissions."""
 
-    SCAN_DELAY = timedelta(minutes=5)
     RETRY_DELAY = timedelta(hours=1)
 
     @classmethod
     def run(cls):
-        """Scan documents uploaded at least five minutes ago."""
+        """Scan documents after the configured upload delay."""
         session_factory = init_submit_session(current_app)
         now = datetime.now(UTC)
+        scan_delay = timedelta(
+            minutes=current_app.config.get("SUBMIT_VIRUS_SCAN_DELAY_MINUTES", 1)
+        )
         with session_scope(session_factory) as session:
             documents = SubmitVirusScanRepository(session).find_documents_to_scan(
-                scan_cutoff=now - cls.SCAN_DELAY,
+                scan_cutoff=now - scan_delay,
                 retry_cutoff=now - cls.RETRY_DELAY,
             )
 
