@@ -58,6 +58,7 @@ email_queue = Table(
     Column("template_name", String),
     Column("status", String),
     Column("created_at", DateTime),
+    Column("created_date", DateTime),
     Column("payload", JSONB),
 )
 
@@ -161,12 +162,14 @@ class SubmitVirusScanRepository:
             .values(virus_scan_result=SCAN_RESULT_REJECTED)
         )
         if result.rowcount == 1 and payload.get("recipients"):
+            created_at = datetime.now(UTC)
             self.session.execute(insert(email_queue).values(
                 entity_id=document["id"],
                 entity_type="DOCUMENT",
                 template_name="document_security_rejected.html",
                 status="PENDING",
-                created_at=datetime.now(UTC),
+                created_at=created_at,
+                created_date=created_at,
                 payload=payload,
             ))
         self.session.commit()
