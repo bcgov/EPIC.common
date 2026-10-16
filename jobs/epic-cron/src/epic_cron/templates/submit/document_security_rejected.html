@@ -9,6 +9,10 @@
     .logo { margin-bottom: 20px; }
     .logo img { max-width: 220px; height: auto; }
     .content { color: #333333; font-size: 16px; line-height: 1.6; }
+    .grey-box { background-color: #FAF9F8; padding: 16px; border-left: 4px solid #1a5a96; margin: 20px 0; }
+    .grey-box p { margin: 0 0 8px 0; }
+    .grey-box p:last-child { margin-bottom: 0; }
+    .grey-box a { color: #1a5a96; font-weight: bold; text-decoration: none; }
     .footer { color: #666666; font-size: 12px; margin-top: 30px; }
   </style>
 </head>
@@ -18,14 +22,22 @@
     <div class="content">
       <p>Hello,</p>
       <p>
-        A file uploaded to EPIC.submit was rejected by a security check and is no longer
-        available to users.
+        A file uploaded by <strong>{{ uploader_name or uploader_email or "an EPIC.submit user" }}</strong>
+        for <strong>{{ project_name }}</strong> was rejected by a security check. The file has
+        been blocked and cannot be opened or downloaded in EPIC.submit.
       </p>
-      <p><strong>Submission:</strong> {{ package_name }}</p>
-      <p><strong>File:</strong> {{ file_name }}</p>
-      <p><strong>Document ID:</strong> {{ document_id }}</p>
-      <p><strong>Uploader email:</strong> {{ uploader_email or "Not available" }}</p>
-      <p>Please contact the uploader if they need to submit a replacement file.</p>
+      <div class="grey-box">
+        <p><strong>Project:</strong> {{ project_name }}</p>
+        <p><strong>Proponent:</strong> {{ proponent_name }}</p>
+        <p><strong>Submission package:</strong> {{ package_name }}</p>
+        <p><strong>File:</strong> {{ file_name }}</p>
+        <p><strong>Document ID:</strong> {{ document_id }}</p>
+        <p><strong>Uploaded by:</strong> {{ uploader_name or "Not available" }}</p>
+        <p><strong>Uploader email:</strong> {{ uploader_email or "Not available" }}</p>
+        <p><strong>Uploaded on:</strong> {{ uploaded_on }}</p>
+        <p><a href="{{ submission_link }}">View the submission package in EPIC.submit</a></p>
+      </div>
+      <p>Please contact the uploader if a replacement file is required.</p>
       <p>Best regards,</p>
       {% include "submit/shared/_signature.html" %}
       {% include "submit/shared/_footer_staff.html" %}

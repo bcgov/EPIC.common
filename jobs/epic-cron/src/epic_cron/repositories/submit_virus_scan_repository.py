@@ -39,6 +39,24 @@ items = Table(
 packages = Table(
     "packages", metadata,
     Column("id", Integer, primary_key=True),
+    Column("account_project_id", Integer),
+    Column("name", String),
+)
+account_projects = Table(
+    "account_projects", metadata,
+    Column("id", Integer, primary_key=True),
+    Column("account_id", Integer),
+    Column("project_id", Integer),
+)
+projects = Table(
+    "projects", metadata,
+    Column("id", Integer, primary_key=True),
+    Column("name", String),
+    Column("proponent_id", Integer),
+)
+proponents = Table(
+    "proponents", metadata,
+    Column("id", Integer, primary_key=True),
     Column("name", String),
 )
 users = Table(
@@ -48,7 +66,10 @@ users = Table(
 )
 account_users = Table(
     "account_users", metadata,
+    Column("account_id", Integer),
     Column("user_id", Integer),
+    Column("first_name", String),
+    Column("last_name", String),
     Column("work_email_address", String),
 )
 email_queue = Table(
@@ -76,22 +97,34 @@ class SubmitVirusScanRepository:
         limit: int = 100,
     ):
         """Return new documents and failed documents whose retry delay has passed."""
-        uploader_email = (
-            select(account_users.c.work_email_address)
-            .select_from(users.join(account_users, account_users.c.user_id == users.c.id))
-            .where(
-                users.c.auth_guid == submissions.c.created_by,
-                account_users.c.work_email_address.is_not(None),
+        def uploader_value(column):
+            return (
+                select(column)
+                .select_from(users.join(account_users, account_users.c.user_id == users.c.id))
+                .where(
+                    users.c.auth_guid == submissions.c.created_by,
+                    account_users.c.account_id == account_projects.c.account_id,
+                )
+                .limit(1)
+                .scalar_subquery()
             )
-            .limit(1)
-            .scalar_subquery()
+
+        uploader_name = uploader_value(
+            account_users.c.first_name + " " + account_users.c.last_name
         )
+        uploader_email = uploader_value(account_users.c.work_email_address)
         stmt = (
             select(
                 submitted_documents.c.id,
                 submitted_documents.c.name,
                 submitted_documents.c.url,
+                submitted_documents.c.created_date.label("uploaded_on"),
+                packages.c.id.label("package_id"),
                 packages.c.name.label("package_name"),
+                account_projects.c.id.label("account_project_id"),
+                projects.c.name.label("project_name"),
+                proponents.c.name.label("proponent_name"),
+                uploader_name.label("uploader_name"),
                 uploader_email.label("uploader_email"),
             )
             .select_from(
@@ -99,6 +132,9 @@ class SubmitVirusScanRepository:
                 .join(submissions, submissions.c.submitted_document_id == submitted_documents.c.id)
                 .join(items, items.c.id == submissions.c.item_id)
                 .join(packages, packages.c.id == items.c.package_id)
+                .join(account_projects, account_projects.c.id == packages.c.account_project_id)
+                .join(projects, projects.c.id == account_projects.c.project_id)
+                .join(proponents, proponents.c.id == projects.c.proponent_id)
             )
             .where(
                 or_(
