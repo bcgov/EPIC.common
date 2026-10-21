@@ -29,6 +29,7 @@ SUBMIT:
   sender:
     email: "EAO.ManagementPlanSupport.dev@gov.bc.ca"
   staffSupportMailId: "EAO.ManagementPlanSupport@gov.bc.ca"
+  epicSystemEmail: "EAO.EPICsystem@gov.bc.ca"
   virusScanDelayMinutes: 1
   signupUrlPath: "/proponent/registration"
   api:
