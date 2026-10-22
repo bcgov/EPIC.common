@@ -25,6 +25,7 @@ data:
   SENDER_EMAIL: "{{ .Values.SUBMIT.sender.email }}"
   CENTRE_SENDER_EMAIL: "{{ .Values.CENTRE.senderEmail }}"
   STAFF_SUPPORT_MAIL_ID: "{{ .Values.SUBMIT.staffSupportMailId }}"
+  EPIC_SYSTEM_EMAIL: "{{ .Values.SUBMIT.epicSystemEmail }}"
   SIGNUP_URL_PATH: "{{ .Values.SUBMIT.signupUrlPath }}"
   # Keycloak configuration
   KEYCLOAK_BASE_URL: "{{ .Values.KEYCLOAK.baseUrl }}"

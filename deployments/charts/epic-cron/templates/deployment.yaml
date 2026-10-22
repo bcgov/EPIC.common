@@ -178,6 +178,11 @@ spec:
                 configMapKeyRef:
                   name: {{ .Values.name }}-config
                   key: STAFF_SUPPORT_MAIL_ID
+            - name: EPIC_SYSTEM_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.name }}-config
+                  key: EPIC_SYSTEM_EMAIL
             - name: SIGNUP_URL_PATH
               valueFrom:
                 configMapKeyRef:
