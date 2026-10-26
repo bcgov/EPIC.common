@@ -1,43 +1,21 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
-import { resolve } from "path";
-import { libInjectCss } from 'vite-plugin-lib-inject-css'
+import { libInjectCss } from "vite-plugin-lib-inject-css";
+
+const sharedRuntimes = ["react", "react-dom", "@mui/material", "@mui/system", "@emotion/react", "@emotion/styled"];
 
 export default defineConfig({
-  plugins: [
-    react(),
-    libInjectCss(),
-    dts({
-      outDir: "dist",
-      insertTypesEntry: true,
-    })
-  ],
+  plugins: [libInjectCss(), dts({ outDir: "dist", insertTypesEntry: true })],
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
-      name: "MuiThemePackage",
-      fileName: (format) => `epic.theme.${format}.js`,
+      entry: fileURLToPath(new URL("./src/index.ts", import.meta.url)),
+      formats: ["es"],
+      fileName: () => "epic.theme.js",
+      cssFileName: "epic.theme",
     },
     rollupOptions: {
-      // Make sure to externalize deps that shouldn't be bundled
-      // into your library
-      external: [
-        "react",
-        "react-dom",
-        "@mui/material",
-        "@emotion/react",
-        "@emotion/styled",
-      ],
-      output: {
-        globals: {
-          react: "React",
-          "react-dom": "ReactDOM",
-          "@mui/material": "MaterialUI",
-          "@emotion/react": "emotionReact",
-          "@emotion/styled": "emotionStyled",
-        },
-      },
+      external: (id) => sharedRuntimes.some((name) => id === name || id.startsWith(`${name}/`)),
     },
   },
 });

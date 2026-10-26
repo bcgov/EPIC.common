@@ -1,7 +1,7 @@
-import { TypographyOptions } from "@mui/material/styles/createTypography";
+import type { TypographyVariantsOptions } from "@mui/material/styles";
 import { BCDesignTokens } from "./designTokens";
 
-export const TypographyStyles: TypographyOptions = {
+export const TypographyStyles: TypographyVariantsOptions = {
   fontFamily: '"BC Sans","Noto Sans",Verdana,Arial,sans-serif',
   h1: {
     fontWeight: BCDesignTokens.typographyFontWeightsBold,

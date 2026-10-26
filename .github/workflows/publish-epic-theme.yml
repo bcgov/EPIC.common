@@ -1,47 +1,74 @@
-name: Publish epic.theme Package
+name: Validate and release epic.theme
 
 on:
+  pull_request:
+    paths: ["epic.theme/**", ".github/workflows/publish-epic-theme.yml"]
   push:
-    branches:
-      - main
-    paths:
-      - "epic.theme/**"
+    branches: [main]
+    tags: ["epic-theme-v2.*"]
+    paths: ["epic.theme/**", ".github/workflows/publish-epic-theme.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: epic.theme
 
 jobs:
-  build-and-publish:
+  validate:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-          cache: "npm"
-          cache-dependency-path: ./epic.theme/package-lock.json
+          node-version-file: epic.theme/.nvmrc
+          cache: npm
+          cache-dependency-path: epic.theme/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:package
+      - name: Pack the validated release
+        run: npm pack --json > pack-metadata.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: epic-theme-package
+          path: |
+            epic.theme/epic.theme-*.tgz
+            epic.theme/pack-metadata.json
 
-      - name: Install dependencies
-        run: npm install
-        working-directory: ./epic.theme
-
-      - name: Build the package
-        run: npm run build
-        working-directory: ./epic.theme
-
-      - name: Verify package name and version
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "Package name: $PACKAGE_NAME"
-          echo "Package version: $PACKAGE_VERSION"
-        working-directory: ./epic.theme
-
-      - name: Publish to npm
-        run: |
-          npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          npm publish --registry=https://registry.npmjs.org/ --access public
+  publish:
+    if: startsWith(github.ref, 'refs/tags/epic-theme-v2.')
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: npm
+    concurrency:
+      group: epic-theme-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: epic.theme/.nvmrc
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: epic-theme-package
+          path: epic.theme
+      - name: Publish the validated artifact on its isolated channel
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: ./epic.theme
+        run: |
+          channel=$(node scripts/check-release.mjs)
+          npm view epic.theme dist-tags --json > tags-before.json
+          tarball=$(node -p "JSON.parse(require('fs').readFileSync('pack-metadata.json', 'utf8'))[0].filename")
+          npm publish "./$tarball" --tag "$channel" --access public
+          npm view epic.theme dist-tags --json > tags-after.json
+          node --input-type=module - <<'JS'
+          import { readFileSync } from 'node:fs';
+          const before = JSON.parse(readFileSync('tags-before.json', 'utf8'));
+          const after = JSON.parse(readFileSync('tags-after.json', 'utf8'));
+          if (before.latest !== after.latest) throw new Error('latest changed; investigate without automatically overwriting another release.');
+          JS
