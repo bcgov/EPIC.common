@@ -1,0 +1,55 @@
+name: Deploy EPIC CRON
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment (test/prod)"
+        required: true
+        default: "test"
+      source_tag:
+        description: "Source tag to promote"
+        required: true
+        default: "latest"
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./
+
+env:
+  APP_NAME: "epic-cron"
+
+jobs:
+  deployment:
+    runs-on: ubuntu-22.04
+
+    if: github.repository == 'bcgov/EPIC.common'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login Openshift
+        shell: bash
+        run: |
+          oc login --server=${{secrets.OPENSHIFT_LOGIN_REGISTRY}} --token=${{secrets.OPENSHIFT_SA_TOKEN}}
+
+      - name: Backup Current Target Image
+        shell: bash
+        run: |
+          oc project ${{ secrets.OPENSHIFT_REPOSITORY }}-tools
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          oc tag ${{ env.APP_NAME }}:${{ github.event.inputs.environment }} ${{ env.APP_NAME }}:backup-${{ github.event.inputs.environment }}-$TIMESTAMP
+          echo "Backup tag created with timestamp: $TIMESTAMP"
+
+      - name: Tag Source Image to Target
+        shell: bash
+        run: |
+          oc project ${{ secrets.OPENSHIFT_REPOSITORY }}-tools
+          oc tag ${{ env.APP_NAME }}:${{ github.event.inputs.source_tag }} ${{ env.APP_NAME }}:${{ github.event.inputs.environment }}
+
+      - name: Rollout
+        shell: bash
+        run: |
+          oc rollout restart deployment/${{ env.APP_NAME }} -n ${{ secrets.OPENSHIFT_REPOSITORY }}-${{ github.event.inputs.environment }}
