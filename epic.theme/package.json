@@ -63,10 +63,6 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "engines": {
-    "node": ">=24 <25",
-    "npm": ">=11 <12"
-  },
   "peerDependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
