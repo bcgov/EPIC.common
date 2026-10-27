@@ -22,4 +22,3 @@ export const theme = createTheme({
 ```
 
 For an existing styled slot, explicitly retain its base styles (including callbacks/variants) when adding new rules. Configure MUI X Date Pickers in the consuming application; the theme does not install Date Pickers.
-

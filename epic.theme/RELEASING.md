@@ -132,4 +132,3 @@ npm run test:package
 ```
 
 The last command installs the built package in a temporary sample application to check its imports, fonts, types and production build. It needs access to npm.
-
