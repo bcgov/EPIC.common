@@ -74,13 +74,108 @@ npm run test:package
 
 The package test packs the built files and installs them in a disposable clean consumer. It verifies strict peer resolution, font CSS, public declarations, Button augmentation and a production Vite build. Network access to npm is needed for the clean installation.
 
-## Release procedure
+## Publish a release to npm
 
-1. Review/merge the publishing safeguards before the theme migration reaches `main`.
-2. For a prerelease, use `2.0.0-next.N` and set `publishConfig.tag` to `mui9-next`.
-3. For stable v2, use its numeric version and `publishConfig.tag: mui9`.
-4. The matching source tag is `epic-theme-v<version>`; only such v2 tags trigger publication after validation.
-5. The workflow publishes the validated tarball and checks that `latest` did not change. If it did, investigate; do not overwrite a concurrent release automatically.
-6. Submit adopts the published numeric version and reruns its production checks before deployment. No Compliance release or dependency change is required.
+Merging a PR does **not** publish the package. A maintainer publishes a release by pushing a Git tag: a name attached to the exact code being released. GitHub Actions then tests, builds and publishes that code.
 
-Publishing/deployment remain release actions. Local package tests and source changes do not publish anything.
+These instructions use **2.0.0** as the example. For a later release, replace `2.0.0` everywhere below with the new version.
+
+### 1. Check the one-time GitHub setup
+
+A repository administrator must:
+
+- Create an environment named **npm** in the EPIC.common repository's **Settings → Environments**.
+- Make a secret named **NPM_TOKEN** available to that environment. It must be allowed to publish the existing `epic.theme` package on npm.
+- If the environment has approval rules, allow version tags such as `epic-theme-v2.0.0` and arrange for a release approver.
+
+Do not put the token in source code or paste it into a terminal command. This automated release uses the GitHub secret; the maintainer does not need to run `npm login` locally.
+
+### 2. Merge the release code
+
+Review and merge the theme PR into **main**, including the publishing workflow. Wait for its validation checks to pass.
+
+The merged `epic.theme/package.json` must contain:
+
+```json
+"version": "2.0.0"
+```
+
+Its `publishConfig.tag` must be `mui9`. Update the version in a PR before future releases; the workflow does not increase it automatically.
+
+### 3. Download the latest main branch
+
+Open a terminal in your **EPIC.common repository root**, not inside `epic.theme`:
+
+```sh
+git fetch origin main
+```
+
+Check the package that is actually on main:
+
+```sh
+git show origin/main:epic.theme/package.json
+```
+
+Find `version` and confirm it is `2.0.0`. **Stop if it still shows the old version:** the release PR has not reached main yet. These commands do not switch your working branch or alter local files.
+
+### 4. Create and push the release tag
+
+```sh
+git tag -a epic-theme-v2.0.0 origin/main -m "Release epic.theme 2.0.0"
+git push origin epic-theme-v2.0.0
+```
+
+The first command creates a local tag on the downloaded main commit. The second sends only that tag to GitHub and **starts the npm release**.
+
+The package version and tag must match exactly: version `2.0.0` requires tag `epic-theme-v2.0.0`. If the tag already exists, stop and check the previous release; do not delete or force-push it.
+
+### 5. Watch the GitHub Action
+
+Open [EPIC.common → Actions → Validate and release epic.theme](https://github.com/bcgov/EPIC.common/actions/workflows/publish-epic-theme.yml).
+
+Open the run for your tag:
+
+1. **validate** installs dependencies, runs tests, builds the theme and checks it in a clean sample application.
+2. **publish** sends that tested package to npm. If it says **Waiting for approval**, an authorized reviewer must approve the **npm** environment.
+3. Wait for both jobs to succeed. If either fails, read the failed step before retrying; first check whether npm already received the version.
+
+The **Run workflow** button only runs validation. It does not publish. Pushing the version tag is the publishing trigger.
+
+### 6. Confirm the package is on npm
+
+```sh
+npm view epic.theme@2.0.0 version
+npm view epic.theme dist-tags
+```
+
+The first command should print `2.0.0`. The tags should include:
+
+```text
+latest: 1.0.11
+mui9: 2.0.0
+```
+
+`mui9` is the label for the new theme. **Keep `latest` on 1.0.11** so existing applications can continue using their current theme. Do not move `latest` to v2.
+
+### 7. Update Submit after publication
+
+In Submit's `submit-web` folder:
+
+```sh
+npm install --save-exact epic.theme@2.0.0
+```
+
+Confirm its `package.json` now contains `"epic.theme": "2.0.0"` and commit the updated `package.json` and `package-lock.json` together. If Submit was using a temporary `vendor/epic.theme-2.0.0.tgz`, remove that temporary package and its metadata after confirming the registry installation works.
+
+Run Submit's lint, unit tests and production build, and complete application testing before deployment. Publishing the theme does not update or deploy Submit automatically. Compliance needs no change.
+
+### If something goes wrong
+
+- **Version not found on npm:** check the tag's Actions run and whether environment approval is pending.
+- **Permission/authentication error:** ask the package maintainer to check `NPM_TOKEN` permissions, expiry and the npm package's publishing rules.
+- **Version already published:** check npm first. A published version cannot be replaced; make corrections in a new version through a new PR and tag.
+- **Need to undo a Submit deployment:** deploy the previous Submit image. Do not unpublish the theme or change the legacy `latest` tag.
+
+### Optional: test a prerelease
+
+For an early trial, use a version such as `2.0.0-next.1`, set `publishConfig.tag` to `mui9-next`, and push the matching tag `epic-theme-v2.0.0-next.1`. Follow the same steps above with that version. Stable releases use `mui9`.
