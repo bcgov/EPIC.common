@@ -1,4 +1,4 @@
-import { Components } from "@mui/material";
+import type { Components, Theme } from "@mui/material/styles";
 import { BCDesignTokens } from "./designTokens";
 
 const activeBorder = {
@@ -7,7 +7,7 @@ const activeBorder = {
   outline: `.125rem solid ${BCDesignTokens.surfaceColorBorderActive}`,
 };
 
-export const ComponentStyles: Components = {
+export const ComponentStyles: Components<Theme> = {
   MuiAppBar: {
     styleOverrides: {
       root: {
@@ -50,6 +50,7 @@ export const ComponentStyles: Components = {
           boxShadow: "none",
           fontFamily: "BC Sans",
           padding: "0.5rem 1rem",
+          "&.Mui-focusVisible": activeBorder,
         };
         if (ownerState.size === "small") {
           style = {
@@ -240,6 +241,7 @@ export const ComponentStyles: Components = {
     },
     styleOverrides: {
       root: {
+        "&.Mui-focusVisible": activeBorder,
         "&.Mui-checked": {
           color: BCDesignTokens.themeBlue90,
         },
@@ -322,7 +324,7 @@ export const ComponentStyles: Components = {
         "& .MuiInputBase-root.MuiInputBase-multiline": {
           padding: 0,
           borderColor: BCDesignTokens.surfaceColorBorderMedium,
-          ".MuiInputBase-inputMultiline": {
+          ".MuiInputBase-input": {
             resize: "vertical"
           }
         },

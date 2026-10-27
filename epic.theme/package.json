@@ -1,45 +1,76 @@
 {
   "name": "epic.theme",
-  "version": "1.0.11",
-  "main": "dist/epic.theme.umd.js",
-  "module": "dist/epic.theme.es.js",
+  "version": "2.0.0",
+  "main": "dist/epic.theme.js",
+  "module": "dist/epic.theme.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build",
-    "watch": "vite build --watch"
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build",
+    "test": "vitest run",
+    "test:package": "node scripts/test-package.mjs",
+    "watch": "vite build --watch",
+    "check:release": "node scripts/check-release.mjs"
   },
   "keywords": [],
   "author": "Nitheesh Ganesh <nitheesh.ganesh@aot-technologies.com>",
   "license": "MIT",
   "description": "Theme config package to be used across multiple EPIC repositories",
-  "dependencies": {
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@mui/material": "^5.16.0",
-    "@mui/system": "^5.16.0",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.2",
+    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-lib-inject-css": "^2.1.1",
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@mui/material": "9.5.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.10",
-    "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "^5.5.3",
-    "vite": "^5.3.3",
-    "vite-plugin-dts": "^3.9.1",
-    "vite-plugin-lib-inject-css": "^2.1.1"
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-is": "18.3.1",
+    "vitest": "4.1.11",
+    "semver": "^7.7.4"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "mui9"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bcgov/EPIC.themeLib.git"
+    "url": "git+https://github.com/bcgov/EPIC.common.git",
+    "directory": "epic.theme"
   },
   "bugs": {
-    "url": "https://github.com/bcgov/EPIC.themeLib/issues"
+    "url": "https://github.com/bcgov/EPIC.common/issues"
   },
-  "homepage": "https://github.com/bcgov/EPIC.themeLib#readme"
+  "homepage": "https://github.com/bcgov/EPIC.common/tree/main/epic.theme",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/epic.theme.js",
+      "default": "./dist/epic.theme.js"
+    },
+    "./style.css": "./dist/index.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^9.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "overrides": {
+    "react-is": "18.3.1"
+  }
 }
