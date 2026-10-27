@@ -85,10 +85,10 @@ These instructions use **2.0.0** as the example. For a later release, replace `2
 A repository administrator must:
 
 - Create an environment named **npm** in the EPIC.common repository's **Settings → Environments**.
-- Make a secret named **NPM_TOKEN** available to that environment. It must be allowed to publish the existing `epic.theme` package on npm.
+- In npm's `epic.theme` package settings, add a **GitHub Actions Trusted Publisher**: organization `bcgov`, repository `EPIC.common`, workflow filename `publish-epic-theme.yml`, environment `npm`. Enable direct publishing with **npm publish**.
 - If the environment has approval rules, allow version tags such as `epic-theme-v2.0.0` and arrange for a release approver.
 
-Do not put the token in source code or paste it into a terminal command. This automated release uses the GitHub secret; the maintainer does not need to run `npm login` locally.
+No `NPM_TOKEN` secret or local `npm login` is needed. npm checks the GitHub workflow's identity using OIDC. The workflow grants this identity permission only to the publishing job and uses npm 11.11.0, which supports trusted publishing.
 
 ### 2. Merge the release code
 
@@ -139,7 +139,17 @@ Open the run for your tag:
 2. **publish** sends that tested package to npm. If it says **Waiting for approval**, an authorized reviewer must approve the **npm** environment.
 3. Wait for both jobs to succeed. If either fails, read the failed step before retrying; first check whether npm already received the version.
 
-The **Run workflow** button only runs validation. It does not publish. Pushing the version tag is the publishing trigger.
+For normal releases, pushing the version tag is the publishing trigger.
+
+To retry an existing tag after changing the publishing workflow (for example, the first `2.0.0` release):
+
+1. Merge the publishing fix into **main**.
+2. Open the Actions page above and click **Run workflow**.
+3. Select **main** as the branch.
+4. Enter `epic-theme-v2.0.0` in **release_tag**, then click **Run workflow**.
+5. Watch `validate` and `publish` as described above.
+
+The workflow reads the updated instructions from main but builds and publishes the code at that exact release tag. It checks that the tagged commit belongs to main and that its package version matches the tag. Do not delete or move the old tag. Leaving **release_tag** empty runs validation only. Rerunning the original failed run would still use its old publishing instructions.
 
 ### 6. Confirm the package is on npm
 
@@ -172,7 +182,7 @@ Run Submit's lint, unit tests and production build, and complete application tes
 ### If something goes wrong
 
 - **Version not found on npm:** check the tag's Actions run and whether environment approval is pending.
-- **Permission/authentication error:** ask the package maintainer to check `NPM_TOKEN` permissions, expiry and the npm package's publishing rules.
+- **Permission/authentication error:** ask an npm package maintainer to check the Trusted Publisher fields above, including the exact workflow filename and `npm` environment, and that direct `npm publish` is allowed. The old `NPM_TOKEN` secret is not used by this workflow.
 - **Version already published:** check npm first. A published version cannot be replaced; make corrections in a new version through a new PR and tag.
 - **Need to undo a Submit deployment:** deploy the previous Submit image. Do not unpublish the theme or change the legacy `latest` tag.
 
