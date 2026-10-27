@@ -114,12 +114,6 @@ Run Submit's lint, unit tests and production build, and complete application tes
 
 For an early trial, use a version such as `2.0.1-next.1`, set `publishConfig.tag` to `mui9-next`, and push the matching tag `epic-theme-v2.0.1-next.1`. Follow the same steps above with that version. Stable releases use `mui9`.
 
-## Updating the README after publication
-
-A published npm version cannot be replaced. Updating GitHub's README alone does not update the README included in `epic.theme@2.0.0`. Publish a new patch version, such as `2.0.1`, with the corrected documentation. Do not unpublish or move an existing release tag.
-
-This documentation-only `2.0.1` release changes no theme source or dependencies. Submit can remain on exact version `2.0.0`; adopting the documentation-only patch is optional. Keep `latest` on `1.0.11`.
-
 ## Check a change locally
 
 From the `epic.theme` folder, run:
