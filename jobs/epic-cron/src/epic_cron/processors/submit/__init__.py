@@ -12,6 +12,7 @@ NEW_USER_INVITATION_ACCOUNT_ADMIN_EMAIL_TEMPLATE = 'new_user_invitation_account_
 NEW_USER_INVITATION_PROJECT_ADMIN_EMAIL_TEMPLATE = 'new_user_invitation_project_admin.html'
 NEW_USER_INVITATION_COLLABORATOR_EMAIL_TEMPLATE = 'new_user_invitation_collaborator.html'
 MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE = 'submission_notify_staff.html'
+GIS_SUBMISSION_NOTIFY_EMAIL_TEMPLATE = 'submission_notify_gis.html'
 SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE = 'submission_awaiting_manager_approval.html'
 MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE = 'management_plan_resubmission_request.html'
 SUBMISSION_WITHDRAWN_CONFIRMATION_EMAIL_TEMPLATE = 'submission_withdrawn_confirmation.html'
@@ -52,6 +53,7 @@ PROCESSORS: Dict[str, Callable[[EmailJob], EmailDetails]] = {
     NEW_USER_INVITATION_PROJECT_ADMIN_EMAIL_TEMPLATE: process_submit_email,
     NEW_USER_INVITATION_COLLABORATOR_EMAIL_TEMPLATE: process_submit_email,
     MANAGEMENT_PLAN_SUBMISSION_NOTIFY_STAFF_EMAIL_TEMPLATE: process_submit_email,
+    GIS_SUBMISSION_NOTIFY_EMAIL_TEMPLATE: process_submit_email,
     SUBMISSION_AWAITING_MANAGER_APPROVAL_EMAIL_TEMPLATE: process_submit_email,
     MANAGEMENT_PLAN_RESUBMISSION_REQUEST_EMAIL_TEMPLATE: process_submit_email,
     SUBMISSION_WITHDRAWN_CONFIRMATION_EMAIL_TEMPLATE: process_submit_email,
