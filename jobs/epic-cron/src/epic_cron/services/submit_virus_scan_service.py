@@ -1,6 +1,6 @@
 """Passive virus scanning for EPIC.submit documents."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 from botocore.exceptions import ClientError
 from flask import current_app
@@ -117,6 +117,11 @@ class SubmitVirusScanService:
     @staticmethod
     def _email_payload(document):
         support_email = current_app.config.get("EPIC_SYSTEM_EMAIL")
+        uploaded_on = document["uploaded_on"]
+        if uploaded_on.tzinfo is None:
+            uploaded_on = uploaded_on.replace(tzinfo=UTC)
+        # BC observes Pacific Time (UTC-07:00) year-round.
+        bc_timezone = timezone(timedelta(hours=-7), name="PCT")
         web_url = current_app.config.get("WEB_URL", "").rstrip("/")
         submission_link = (
             f"{web_url}/staff/projects/{document['account_project_id']}"
@@ -137,7 +142,7 @@ class SubmitVirusScanService:
                 "document_id": document["id"],
                 "uploader_name": document.get("uploader_name"),
                 "uploader_email": document.get("uploader_email"),
-                "uploaded_on": document["uploaded_on"].strftime("%Y-%m-%d %H:%M UTC"),
+                "uploaded_on": uploaded_on.astimezone(bc_timezone).strftime("%Y-%m-%d %I:%M %p %Z"),
                 "submission_link": submission_link,
             },
             "cc": [],
