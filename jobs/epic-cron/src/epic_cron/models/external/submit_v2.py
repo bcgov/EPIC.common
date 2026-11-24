@@ -39,6 +39,21 @@ class SubmitAccountProjectV2(Base):
     project_id = Column(Integer, nullable=False)
 
 
+class SubmitAccountProjectWorkV2(Base):
+    """Submit v2 account project work mapping (account_project_works table).
+
+    Links an onboarded account project to an EPIC.track work; used to find the works whose
+    packages must be reconciled with the work's current phase.
+    """
+
+    __tablename__ = "account_project_works"
+
+    id = Column(Integer, primary_key=True)
+    account_project_id = Column(Integer, nullable=False)
+    work_id = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+
 class SubmitProjectReportV2(Base):
     """Submit v2 project report mapping (project_reports table).
 

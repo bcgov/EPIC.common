@@ -21,6 +21,7 @@ from tasks.sync_approved_condition import SyncApprovedCondition
 from tasks.sync_report import SyncReport
 from tasks.sync_staff_work_role import SyncStaffWorkRole
 from tasks.work_extractor import WorkExtractor
+from tasks.work_phase_sync import WorkPhaseSync
 from tasks.phase_extractor import PhaseExtractor
 from tasks.epic_public_extractor import EpicPublicExtractor
 from tasks.deactivate_inactive_users import DeactivateInactiveUsers
@@ -166,8 +167,8 @@ def run(
             PhaseExtractor.do_sync()
             application.logger.info('<<<< Completed Phase Extraction >>>>')
             application.logger.info(f'Running Work Extractor at {datetime.now()}')
-            WorkExtractor.do_sync()
-            application.logger.info('<<<< Completed Work Extraction >>>>')
+            WorkPhaseSync.extract_then_sync(WorkExtractor.do_sync)
+            application.logger.info('<<<< Completed Work Extraction and Phase Sync >>>>')
         elif job_name == 'EXTRACT_PHASE':
             application.logger.info(f'Running Phase Extractor at {datetime.now()}')
             PhaseExtractor.do_sync()
